@@ -73,6 +73,13 @@ body {
   font-size: 0.95rem;
 }
 
+.field__input {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
 .field input {
   flex: 1 1 auto;
   min-width: 0;
@@ -83,7 +90,27 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.field input:focus {
+.field select {
+  flex: 0 0 74px;
+  padding: 8px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f7fafc;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.field__no-unit {
+  flex: 0 0 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.field input:focus,
+.field select:focus {
   outline: 2px solid #9cc4e0;
   outline-offset: 1px;
   border-color: var(--blue);

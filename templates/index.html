@@ -30,21 +30,35 @@
       {% endif %}
 
       <form method="post" action="/calculate">
+        {% set resistor_units = [('ohm', 'Ω'), ('kohm', 'kΩ'), ('mohm', 'MΩ')] %}
+        {% set voltage_units = [('v', 'V'), ('mv', 'mV')] %}
         {% set fields = [
-          ('vcc', 'VCC (V)'),
-          ('r1', 'R1 (kΩ)'),
-          ('r2', 'R2 (kΩ)'),
-          ('rc', 'RC (kΩ)'),
-          ('re', 'RE (kΩ)'),
-          ('beta', 'β'),
-          ('vbe', 'VBE (V)')
+          ('vcc', 'VCC', voltage_units),
+          ('r1', 'R1', resistor_units),
+          ('r2', 'R2', resistor_units),
+          ('rc', 'RC', resistor_units),
+          ('re', 'RE', resistor_units),
+          ('beta', 'β', []),
+          ('vbe', 'VBE', voltage_units)
         ] %}
-        {% for name, label in fields %}
+        {% for name, label, unit_options in fields %}
           <div class="field">
             <label for="{{ name }}">{{ label }}</label>
-            <input id="{{ name }}" name="{{ name }}" type="number" step="any"
-                   value="{{ form[name] }}"
-                   {% if errors.get(name) %}aria-invalid="true"{% endif %}>
+            <span class="field__input">
+              <input id="{{ name }}" name="{{ name }}" type="number" step="any"
+                     value="{{ form[name] }}"
+                     {% if errors.get(name) %}aria-invalid="true"{% endif %}>
+              {% if unit_options %}
+                <select id="{{ name }}_unit" name="{{ name }}_unit"
+                        aria-label="หน่วยของ {{ label }}">
+                  {% for unit_value, unit_text in unit_options %}
+                    <option value="{{ unit_value }}"{% if units.get(name) == unit_value %} selected{% endif %}>{{ unit_text }}</option>
+                  {% endfor %}
+                </select>
+              {% else %}
+                <span class="field__no-unit" aria-hidden="true">–</span>
+              {% endif %}
+            </span>
           </div>
           {% if errors.get(name) %}
             <p class="field-error">{{ errors[name] }}</p>
@@ -55,7 +69,8 @@
       </form>
 
       <p class="hint">
-        ค่าตัวต้านทานกรอกเป็น kΩ · แบบจำลองใช้ β คงที่ และ VBE คงที่
+        เลือกหน่วยของแต่ละช่องได้ (Ω / kΩ / MΩ และ V / mV) ·
+        แบบจำลองใช้ β คงที่ และ VBE คงที่
         ผลนอกย่าน forward-active ไม่ใช่ค่าที่เชื่อถือได้
       </p>
     </section>

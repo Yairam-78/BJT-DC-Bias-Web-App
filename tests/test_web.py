@@ -94,3 +94,72 @@ class TestWeb(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn("จำนวนจำกัด", body)
         self.assertNotIn("status--ok", body)
+
+
+class TestUnitSelection(unittest.TestCase):
+    def setUp(self):
+        app.config["TESTING"] = True
+        self.client = app.test_client()
+
+    def _post(self, **overrides):
+        data = {
+            "vcc": "12", "r1": "100", "r2": "22",
+            "rc": "2.2", "re": "1", "beta": "100", "vbe": "0.7",
+        }
+        data.update(overrides)
+        return self.client.post("/calculate", data=data)
+
+    def test_index_renders_unit_selectors(self):
+        body = self.client.get("/").get_data(as_text=True)
+        for field in ("r1", "r2", "rc", "re"):
+            self.assertIn(f'name="{field}_unit"', body)
+            for unit in ("ohm", "kohm", "mohm"):
+                self.assertIn(f'value="{unit}"', body)
+        for field in ("vcc", "vbe"):
+            self.assertIn(f'name="{field}_unit"', body)
+            for unit in ("v", "mv"):
+                self.assertIn(f'value="{unit}"', body)
+        self.assertNotIn('name="beta_unit"', body)
+
+    def test_ohm_unit_matches_kohm_result(self):
+        res = self._post(
+            r1="100000", r1_unit="ohm",
+            r2="22000", r2_unit="ohm",
+            rc="2200", rc_unit="ohm",
+            re="1000", re_unit="ohm",
+        )
+        body = res.get_data(as_text=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("8.052", body)   # VCE
+        self.assertIn("1.230", body)   # IC (mA)
+
+    def test_mohm_unit_scales_correctly(self):
+        res = self._post(
+            r1="0.1", r1_unit="mohm",
+            r2="0.022", r2_unit="mohm",
+            rc="0.0022", rc_unit="mohm",
+            re="0.001", re_unit="mohm",
+        )
+        body = res.get_data(as_text=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("8.052", body)
+        self.assertIn("1.230", body)
+
+    def test_millivolt_unit_scales_correctly(self):
+        res = self._post(vcc="12000", vcc_unit="mv", vbe="700", vbe_unit="mv")
+        body = res.get_data(as_text=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("8.052", body)
+        self.assertIn("1.230", body)
+
+    def test_invalid_unit_is_reported(self):
+        res = self._post(r1_unit="bogus")
+        body = res.get_data(as_text=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("R1 หน่วยไม่ถูกต้อง", body)
+        self.assertNotIn("status--ok", body)
+
+    def test_selected_unit_is_kept_after_submit(self):
+        body = self._post(r1="100000", r1_unit="ohm").get_data(as_text=True)
+        self.assertIn('value="ohm" selected', body)
+        self.assertIn('value="100000"', body)

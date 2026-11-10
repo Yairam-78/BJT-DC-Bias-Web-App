@@ -9,7 +9,8 @@ BJT NPN Common-Emitter แบบ **Voltage-Divider Bias** ด้วย Forward-A
 
 ## ภาพรวม
 
-- หน้าเว็บให้กรอก VCC, R1, R2, RC, RE, β และ VBE
+- หน้าเว็บให้กรอก VCC, R1, R2, RC, RE, β และ VBE พร้อมเลือกหน่วยของแต่ละช่องได้
+  (Ω / kΩ / MΩ สำหรับตัวต้านทาน, V / mV สำหรับแรงดัน)
 - Python (`dc_bias.py`) คำนวณ VB, VE, VC, VCE, IC, IB, IE, VTH และ RTH
 - แสดงหน่วยกำกับทุกค่า และแจ้งสถานะการทำงาน: Forward-Active / Cutoff / Saturation
 - ตรวจสอบข้อมูลนำเข้าและแสดงข้อความผิดพลาดที่อ่านได้ (ไม่ทำให้หน้าเว็บล้ม)
@@ -18,7 +19,7 @@ BJT NPN Common-Emitter แบบ **Voltage-Divider Bias** ด้วย Forward-A
 
 ```
 BJT DC Bias Web App/
-├── app.py                  # Flask routes, form parsing, kΩ → Ω
+├── app.py                  # Flask routes, form parsing, unit → SI conversion
 ├── dc_bias.py              # สมการวิศวกรรมล้วน (SI units) ไม่รู้จัก HTTP
 ├── templates/index.html    # ฟอร์มและตารางผลลัพธ์ (Jinja)
 ├── static/style.css        # หน้าตาเว็บ
@@ -79,27 +80,29 @@ python -m flask --app app run
 python -m unittest discover -s tests -v
 ```
 
-ชุดทดสอบมี 17 tests ครอบคลุม
+ชุดทดสอบมี 25 tests ครอบคลุม
 
 - สมการ DC bias เทียบค่าอ้างอิง
 - การตรวจสอบข้อมูลนำเข้า (R ≤ 0, β ≤ 0, VCC ≤ 0, VBE ติดลบ)
 - การตรวจจุดทำงาน Cutoff และ Saturation
 - HTTP: `GET /` และ `POST /calculate` ผ่าน Flask test client
 - ข้อมูลผิดรูปแบบ เช่น ช่องว่าง, `abc`, `100,000`
+- การเลือกหน่วย (Ω / kΩ / MΩ, V / mV) และหน่วยที่ไม่รู้จัก
 
 ## หน่วยของค่า
 
 | ปริมาณ | หน่วยที่กรอกบนหน้าเว็บ | หน่วยภายใน `dc_bias.py` | หน่วยที่แสดง |
 |---|---|---|---|
-| VCC, VBE | V | V | V |
-| R1, R2, RC, RE | kΩ | Ω | — |
+| VCC, VBE | เลือกได้: V หรือ mV (ค่าเริ่มต้น V) | V | V |
+| R1, R2, RC, RE | เลือกได้: Ω, kΩ หรือ MΩ (ค่าเริ่มต้น kΩ) | Ω | — |
 | β | ไม่มีหน่วย | ไม่มีหน่วย | — |
 | VB, VE, VC, VCE, VTH | — | V | V (3 ตำแหน่ง) |
 | IC, IE | — | A | mA (3 ตำแหน่ง) |
 | IB | — | A | µA (3 ตำแหน่ง) |
 | RTH | — | Ω | kΩ (1 ตำแหน่ง) |
 
-`app.py` เป็นผู้แปลง kΩ → Ω (×1000) ก่อนเรียก `dc_bias.py`
+`app.py` เป็นผู้แปลงค่าที่ผู้ใช้เลือกหน่วยมาเป็นหน่วยฐาน SI
+(Ω, V) ก่อนเรียก `dc_bias.py`
 โมดูลคำนวณจึงทำงานในหน่วยฐาน SI เสมอ และทดสอบแยกได้โดยไม่ต้องมี Flask
 
 ## สมการที่ใช้
