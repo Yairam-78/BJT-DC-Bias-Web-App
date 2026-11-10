@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BJT DC Bias Calculator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main class="page">
+  <header class="page__header">
+    <h1>BJT DC Bias Calculator</h1>
+    <p class="page__subtitle">
+      NPN Common-Emitter · Voltage-Divider Bias · Forward-Active Approximation
+    </p>
+  </header>
+
+  <div class="layout">
+    <section class="card">
+      <h2>Inputs</h2>
+
+      {% if errors %}
+        <div class="errors" role="alert">
+          {% if errors.get('_form') %}
+            <p>{{ errors['_form'] }}</p>
+          {% else %}
+            <p>กรุณาแก้ไขค่าที่ไม่ถูกต้อง ({{ errors|length }} รายการ)</p>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <form method="post" action="/calculate">
+        {% set fields = [
+          ('vcc', 'VCC (V)'),
+          ('r1', 'R1 (kΩ)'),
+          ('r2', 'R2 (kΩ)'),
+          ('rc', 'RC (kΩ)'),
+          ('re', 'RE (kΩ)'),
+          ('beta', 'β'),
+          ('vbe', 'VBE (V)')
+        ] %}
+        {% for name, label in fields %}
+          <div class="field">
+            <label for="{{ name }}">{{ label }}</label>
+            <input id="{{ name }}" name="{{ name }}" type="number" step="any"
+                   value="{{ form[name] }}"
+                   {% if errors.get(name) %}aria-invalid="true"{% endif %}>
+          </div>
+          {% if errors.get(name) %}
+            <p class="field-error">{{ errors[name] }}</p>
+          {% endif %}
+        {% endfor %}
+
+        <button type="submit" class="button">Calculate DC Bias</button>
+      </form>
+
+      <p class="hint">
+        ค่าตัวต้านทานกรอกเป็น kΩ · แบบจำลองใช้ β คงที่ และ VBE คงที่
+        ผลนอกย่าน forward-active ไม่ใช่ค่าที่เชื่อถือได้
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>DC Operating Point</h2>
+
+      {% if result %}
+        <table class="results">
+          <tbody>
+            <tr><th scope="row">VB</th><td>{{ "%.3f"|format(result.vb) }} V</td></tr>
+            <tr><th scope="row">VE</th><td>{{ "%.3f"|format(result.ve) }} V</td></tr>
+            <tr><th scope="row">VC</th><td>{{ "%.3f"|format(result.vc) }} V</td></tr>
+            <tr><th scope="row">VCE</th><td>{{ "%.3f"|format(result.vce) }} V</td></tr>
+            <tr><th scope="row">IC</th><td>{{ "%.3f"|format(result.ic * 1000) }} mA</td></tr>
+            <tr><th scope="row">IB</th><td>{{ "%.3f"|format(result.ib * 1e6) }} µA</td></tr>
+            <tr><th scope="row">IE</th><td>{{ "%.3f"|format(result.ie * 1000) }} mA</td></tr>
+            <tr><th scope="row">VTH</th><td>{{ "%.3f"|format(result.vth) }} V</td></tr>
+            <tr><th scope="row">RTH</th><td>{{ "%.1f"|format(result.rth / 1000) }} kΩ</td></tr>
+          </tbody>
+        </table>
+
+        {% if status == 'active' %}
+          <div class="status status--ok">Forward-Active</div>
+        {% elif status == 'cutoff' %}
+          <div class="status status--warn">Cutoff</div>
+        {% else %}
+          <div class="status status--warn">Saturation</div>
+        {% endif %}
+
+        {% for warning in result.warnings %}
+          <p class="warning">{{ warning }}</p>
+        {% endfor %}
+      {% else %}
+        <p class="placeholder">
+          กรอกค่าในฟอร์มแล้วกด <strong>Calculate DC Bias</strong>
+          เพื่อคำนวณจุดทำงานกระแสตรง
+        </p>
+      {% endif %}
+    </section>
+  </div>
+</main>
+</body>
+</html>
