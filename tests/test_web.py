@@ -28,7 +28,7 @@ class TestWeb(unittest.TestCase):
         res = self.client.post("/calculate", data={})
         body = res.get_data(as_text=True)
         self.assertEqual(res.status_code, 200)
-        self.assertIn("ต้องกรอก", body)
+        self.assertEqual(body.count("ต้องกรอก"), 7)
 
     def test_non_numeric_value_is_reported(self):
         res = self.client.post("/calculate", data={
@@ -70,4 +70,27 @@ class TestWeb(unittest.TestCase):
             "vcc": "12", "r1": "1000000000000", "r2": "22",
             "rc": "2.2", "re": "1", "beta": "1000000", "vbe": "0.7",
         })
+        body = res.get_data(as_text=True)
         self.assertEqual(res.status_code, 200)
+        self.assertNotIn("nan", body)
+        self.assertNotIn("inf", body)
+
+    def test_huge_resistors_give_finite_result(self):
+        res = self.client.post("/calculate", data={
+            "vcc": "12", "r1": "1e305", "r2": "1e305",
+            "rc": "2.2", "re": "1", "beta": "100", "vbe": "0.7",
+        })
+        body = res.get_data(as_text=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertNotIn("nan", body)
+        self.assertNotIn("inf", body)
+
+    def test_infinite_input_is_rejected(self):
+        res = self.client.post("/calculate", data={
+            "vcc": "1e309", "r1": "100", "r2": "22",
+            "rc": "2.2", "re": "1", "beta": "100", "vbe": "0.7",
+        })
+        body = res.get_data(as_text=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("จำนวนจำกัด", body)
+        self.assertNotIn("status--ok", body)

@@ -7,6 +7,7 @@ All quantities are in SI base units: volts, amperes, ohms. The web layer is
 responsible for converting kilo-ohms from the form before calling here.
 """
 
+import math
 from dataclasses import dataclass
 
 
@@ -26,7 +27,9 @@ class BiasResult:
 
 
 def _require_positive(name: str, value: float) -> None:
-    if not value > 0:
+    if not math.isfinite(value):
+        raise ValueError(f"{name} ต้องเป็นจำนวนจำกัด (ได้รับ {value})")
+    if value <= 0:
         raise ValueError(f"{name} ต้องมากกว่า 0 (ได้รับ {value})")
 
 
@@ -46,11 +49,15 @@ def calculate_dc_bias(
     _require_positive("RC", rc)
     _require_positive("RE", re)
     _require_positive("beta", beta)
-    if not vbe >= 0:
+    if not math.isfinite(vbe):
+        raise ValueError(f"VBE ต้องเป็นจำนวนจำกัด (ได้รับ {vbe})")
+    if vbe < 0:
         raise ValueError(f"VBE ต้องไม่ติดลบ (ได้รับ {vbe})")
 
-    vth = vcc * r2 / (r1 + r2)
-    rth = r1 * r2 / (r1 + r2)
+    # Written to stay finite when the resistors are extremely large:
+    # vcc * r2 overflows before the division for r2 near 1e308.
+    vth = vcc / (1.0 + r1 / r2)
+    rth = 1.0 / (1.0 / r1 + 1.0 / r2)
 
     # Cutoff: the divider cannot forward-bias the base-emitter junction.
     if vth <= vbe + 1e-9:
@@ -79,6 +86,12 @@ def calculate_dc_bias(
     vb = ve + vbe
     vc = vcc - ic * rc
     vce = vc - ve
+
+    outputs = (vth, rth, ib, ic, ie, vb, ve, vc, vce)
+    if not all(math.isfinite(value) for value in outputs):
+        raise ValueError(
+            "ผลลัพธ์ไม่ใช่จำนวนจำกัด — ค่าอุปกรณ์อยู่นอกขอบเขตที่โปรแกรมคำนวณได้"
+        )
 
     if vce <= 0.3:
         region = "saturation"
