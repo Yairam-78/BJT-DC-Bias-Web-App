@@ -435,6 +435,99 @@ sub {
   font-size: 0.9rem;
 }
 
+/* ---------- mode picker ---------- */
+
+.mode-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 9px 11px;
+  background: #f2f8fb;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.mode-picker label {
+  flex: 0 0 148px;
+  font-size: 0.86rem;
+  line-height: 1.25;
+}
+
+.mode-picker select {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid #cfdde7;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mode-picker select:focus {
+  outline: 2px solid #a9d3de;
+  outline-offset: 1px;
+  border-color: var(--focus);
+}
+
+.button.button--inline {
+  flex: 0 0 auto;
+  width: auto;
+  margin-top: 0;
+  padding: 7px 14px;
+  font-size: 0.84rem;
+}
+
+.mode-chip {
+  flex: 0 0 auto;
+  margin-left: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #e3f1f5;
+  color: var(--teal-deep);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ---------- text schematic (fixed / emitter) ---------- */
+
+.schematic {
+  padding: 14px 16px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: #f7fafc;
+}
+
+.schematic__title {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--teal-deep);
+}
+
+.schematic__list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.86rem;
+}
+
+.schematic__list li {
+  margin-bottom: 6px;
+}
+
+.schematic__list li:last-child {
+  margin-bottom: 0;
+}
+
+.schematic__values {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- footer goal ---------- */
 
 .goal {
@@ -505,5 +598,13 @@ sub {
 
   .field-error {
     margin-left: 0;
+  }
+
+  .mode-picker {
+    flex-wrap: wrap;
+  }
+
+  .mode-picker label {
+    flex-basis: 100%;
   }
 }
