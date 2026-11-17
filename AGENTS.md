@@ -1,6 +1,6 @@
 # AGENTS.md — กติกาสำหรับ AI Coding Agent
 
-โปรเจกต์นี้เป็น Flask Web App สำหรับคำนวณ BJT DC Bias (ENG29 2121 Lab 02)
+โปรเจกต์นี้เป็น Flask Web App สำหรับคำนวณ BJT DC Bias (ENG29 2121 Lab 02–03)
 กติกาต่อไปนี้มีผลกับทุกการแก้ไขโค้ดใน repository นี้
 
 ## สถาปัตยกรรม
@@ -9,11 +9,14 @@
 - `dc_bias.py` รับและคืนค่าใน **หน่วย SI เท่านั้น** (V, A, Ω) — การแปลงหน่วยที่ผู้ใช้เลือกบนฟอร์ม (Ω/kΩ/MΩ, V/mV) เป็นความรับผิดชอบของ `app.py`
 - `templates/index.html` แสดงผลเท่านั้น — **ห้ามใส่สมการฟิสิกส์หรือคำนวณตัวเลขใน template**
 - `app.py` ทำหน้าที่ parse ฟอร์ม, แปลงหน่วย, เรียก `dc_bias`, และ render — ไม่มีสมการวิศวกรรม
-- ผลลัพธ์ทุกค่าต้องไหลจาก `dc_bias.calculate_dc_bias()` เสมอ **ห้ามฮาร์ดโค้ดตัวเลขผลลัพธ์ใน HTML**
+- โหมดไบอัสทั้งหมดประกาศที่ `app.py::MODES` (divider / fixed / emitter) — เพิ่มโหมดใหม่ต้องมีฟังก์ชันคำนวณใน `dc_bias.py` และลงทะเบียนใน `MODES` + `BIAS_FUNCTIONS`
+- ผลลัพธ์ทุกค่าต้องไหลจากฟังก์ชันใน `dc_bias.py` ตามโหมดที่เลือก **ห้ามฮาร์ดโค้ดตัวเลขผลลัพธ์ใน HTML**
 
 ## การทดสอบ
 
 - ทุกฟีเจอร์หรือ bug fix ต้องมี test ก่อนเขียน implementation (TDD)
+  ยกเว้นงาน Lab 03 ที่ใบงานกำหนดให้ตรวจผ่าน Browser แทนการเพิ่ม unittest ใหม่ —
+  หลักฐานการตรวจคือตาราง A1–A5 ใน `docs/validation.md` พร้อมภาพใน `docs/evidence/`
 - รันทั้งชุดด้วย `python -m unittest discover -s tests -v` — ต้องเขียวทั้งหมดก่อน commit
 - test ของสมการอยู่ใน `tests/test_dc_bias.py`, test ของ HTTP อยู่ใน `tests/test_web.py`
 - test ต้องไม่พึ่ง network หรือ service ภายนอก
