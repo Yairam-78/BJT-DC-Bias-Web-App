@@ -33,6 +33,26 @@
     </div>
   </header>
 
+  <section class="mode-bar" aria-labelledby="mode-label">
+    <p class="mode-bar__label" id="mode-label">
+      Bias circuit
+      <span class="mode-bar__hint">กดการ์ดเพื่อสลับวงจร</span>
+    </p>
+    <form class="mode-options" method="get" action="{{ url_for('index') }}"
+          role="group" aria-labelledby="mode-label">
+      {% for value, label, short, parts in mode_options %}
+        <button type="submit" name="mode" value="{{ value }}"
+                title="{{ label }}"
+                class="mode-option{% if value == mode %} is-active{% endif %}"
+                {% if value == mode %}aria-current="true" disabled{% endif %}>
+          <span class="mode-option__name">{{ short }}</span>
+          <span class="mode-option__parts" aria-hidden="true">{{ parts }}</span>
+          {% if value == mode %}<span class="mode-option__check" aria-hidden="true">✓</span>{% endif %}
+        </button>
+      {% endfor %}
+    </form>
+  </section>
+
   <div class="layout">
     <section class="card" aria-labelledby="inputs-title">
       <h2 id="inputs-title">
@@ -44,18 +64,6 @@
         </span>
         Input Parameters
       </h2>
-
-      <form class="mode-picker" method="get" action="{{ url_for('index') }}">
-        <label for="mode">Bias circuit</label>
-        <span class="field__input">
-          <select id="mode" name="mode">
-            {% for value, label in mode_options %}
-              <option value="{{ value }}"{% if value == mode %} selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-          <button type="submit" class="button button--inline">Load form</button>
-        </span>
-      </form>
 
       {% if errors %}
         <div class="errors" role="alert">
@@ -122,7 +130,7 @@
       </form>
 
       <p class="hint">
-        ช่องอินพุตเปลี่ยนตามวงจรที่เลือก — เลือกวงจรด้านบนแล้วกด <strong>Load form</strong> ·
+        ช่องอินพุตเปลี่ยนตามวงจรที่เลือก — กดการ์ดวงจรด้านบนได้เลย ·
         เลือกหน่วยของแต่ละช่องได้ (Ω / kΩ / MΩ และ V / mV) ·
         แบบจำลองใช้ β คงที่ และ VBE คงที่
         ผลนอกย่าน forward-active ไม่ใช่ค่าที่เชื่อถือได้

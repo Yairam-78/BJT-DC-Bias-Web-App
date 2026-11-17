@@ -22,14 +22,20 @@ DEFAULT_MODE = "divider"
 MODES = {
     "divider": {
         "label": "Voltage Divider Bias",
+        "short": "Voltage Divider",
+        "parts": "R1 · R2 · RC · RE",
         "fields": ("vcc", "r1", "r2", "rc", "re", "beta", "vbe"),
     },
     "fixed": {
         "label": "Fixed Bias",
+        "short": "Fixed Bias",
+        "parts": "RB · RC",
         "fields": ("vcc", "rb", "rc", "beta", "vbe"),
     },
     "emitter": {
         "label": "Emitter Bias",
+        "short": "Emitter Bias",
+        "parts": "RB · RC · RE",
         "fields": ("vcc", "rb", "rc", "re", "beta", "vbe"),
     },
 }
@@ -40,7 +46,12 @@ BIAS_FUNCTIONS = {
     "emitter": calculate_emitter_bias,
 }
 
-MODE_OPTIONS = tuple((name, config["label"]) for name, config in MODES.items())
+# (value, full label, short title, resistor list) — the picker shows the short
+# title and the parts so the choice is readable without opening a dropdown.
+MODE_OPTIONS = tuple(
+    (name, config["label"], config["short"], config["parts"])
+    for name, config in MODES.items()
+)
 
 DEFAULT_FORM = {
     "vcc": "12",

@@ -47,6 +47,7 @@
 
 ### Task 3 · `templates/index.html` + `static/style.css`
 - [x] ฟอร์มเลือกโหมด (GET) + hidden `mode` ในฟอร์ม POST
+- [x] แถบการ์ดเลือกวงจรเต็มความกว้างเหนือการ์ดทั้งสาม — กดครั้งเดียวสลับโหมด (เลิกใช้ select + ปุ่ม Load form)
 - [x] แสดงเฉพาะช่องของโหมด (`mode_fields`)
 - [x] ช่อง `rb` + label
 - [x] Thevenin แสดงเฉพาะ Divider
