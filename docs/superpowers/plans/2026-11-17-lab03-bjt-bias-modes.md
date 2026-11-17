@@ -17,7 +17,7 @@
 | D1 | รูปแบบผลลัพธ์ | คง `BiasResult` dataclass + เพิ่ม `as_dict()` | เปลี่ยนเป็น dict ล้วนจะทำให้ test เดิม 12 รายการพัง (attribute access) |
 | D2 |  threshold เตือน Saturation | คง `VCE ≤ 0.3 V` ทุกโหมด | ตรงกับ docs/README ของ Lab 02 และเข้มกว่าเกณฑ์ 0.2 V ในใบงาน |
 | D3 | unittest ใหม่ | ไม่เพิ่ม | ใบงาน Lab 03 ระบุให้ตรวจผ่าน Browser (ขัดกับ AGENTS.md ที่บังคับ TDD — บันทึกไว้) |
-| D4 | วงจรในหน้าเว็บ | Divider ใช้ SVG เดิม, Fixed/Emitter ใช้การ์ดข้อความ | เร็วและไม่เพิ่มโค้ดวาดภาพที่ไม่ได้คะแนน |
+| D4 | วงจรในหน้าเว็บ | วาด SVG จริงครบทั้ง 3 โหมด (เปลี่ยนจากแผนแรกที่เป็นการ์ดข้อความ) | ผู้ใช้ขอให้เห็นวงจรจริง และ SVG ยังคงไม่มีสมการ ใช้แค่ echo ค่าจากฟอร์ม |
 
 ## Global Constraints
 
@@ -50,7 +50,7 @@
 - [x] แสดงเฉพาะช่องของโหมด (`mode_fields`)
 - [x] ช่อง `rb` + label
 - [x] Thevenin แสดงเฉพาะ Divider
-- [x] การ์ดวงจรแบบข้อความสำหรับ Fixed/Emitter
+- [x] SVG วงจรแยกตามโหมด: Divider (ของเดิม), Fixed (RB + RC, emitter ลงกราวด์), Emitter (RB + RC + RE)
 - [x] หัวผลระบุโหมด
 
 ### Task 4 · เอกสารและ config

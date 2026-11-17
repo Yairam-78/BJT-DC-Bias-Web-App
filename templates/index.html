@@ -200,29 +200,105 @@
           <text x="305" y="204">(β = {{ form['beta'] }})</text>
         </g>
       </svg>
+      {% elif mode == 'fixed' %}
+      <svg class="circuit" viewBox="0 0 420 380" role="img"
+           aria-label="วงจรขยาย Common-Emitter แบบ Fixed Bias: RB จาก VCC ไป Base, RC จาก VCC ไป Collector, Emitter ต่อลงกราวด์โดยตรง">
+        <g class="circuit__wire">
+          <path d="M270,45 L270,70"/>
+          <path d="M150,70 L270,70"/>
+          <path d="M150,70 L150,85"/>
+          <path d="M150,155 L150,190"/>
+          <path d="M150,190 L235,190"/>
+          <path d="M270,140 L270,155"/>
+          <path d="M270,225 L270,340"/>
+
+          <path d="M150,85 L162,95 L138,105 L162,115 L138,125 L162,135 L138,145 L150,155"/>
+          <path d="M270,70 L270,85 L282,95 L258,105 L282,115 L258,125 L270,135 L270,140"/>
+
+          <path d="M235,175 L270,155"/>
+          <path d="M235,205 L270,225"/>
+        </g>
+
+        <circle class="circuit__body" cx="255" cy="190" r="42"/>
+        <line class="circuit__wire circuit__bar" x1="235" y1="168" x2="235" y2="212"/>
+        <polygon class="circuit__arrow" points="270,225 259.3,223.5 263.3,216.5"/>
+
+        <circle class="circuit__dot" cx="150" cy="190" r="3.5"/>
+        <circle class="circuit__dot" cx="270" cy="45" r="3.5"/>
+
+        <g class="circuit__ground">
+          <line x1="254" y1="340" x2="286" y2="340"/>
+          <line x1="260" y1="347" x2="280" y2="347"/>
+          <line x1="266" y1="354" x2="274" y2="354"/>
+        </g>
+
+        <g class="circuit__text">
+          <text class="circuit__value" x="270" y="24" text-anchor="middle"><tspan font-style="italic">V</tspan><tspan baseline-shift="sub" font-size="9">CC</tspan> = {{ form['vcc'] }} {{ unit_text[units['vcc']] }}</text>
+
+          <text x="128" y="113" text-anchor="end"><tspan font-style="italic">R</tspan><tspan baseline-shift="sub" font-size="9">B</tspan></text>
+          <text class="circuit__value" x="128" y="131" text-anchor="end">{{ form['rb'] }} {{ unit_text[units['rb']] }}</text>
+
+          <text x="292" y="101"><tspan font-style="italic">R</tspan><tspan baseline-shift="sub" font-size="9">C</tspan></text>
+          <text class="circuit__value" x="292" y="119">{{ form['rc'] }} {{ unit_text[units['rc']] }}</text>
+
+          <text class="circuit__note" x="292" y="262"><tspan font-style="italic">V</tspan><tspan baseline-shift="sub" font-size="9">E</tspan> = 0 V</text>
+
+          <text x="305" y="168"><tspan font-style="italic">Q</tspan><tspan baseline-shift="sub" font-size="9">1</tspan></text>
+          <text x="305" y="186">NPN</text>
+          <text x="305" y="204">(β = {{ form['beta'] }})</text>
+        </g>
+      </svg>
       {% else %}
-      <div class="schematic">
-        <p class="schematic__title">{{ mode_label }} · NPN Common Emitter</p>
-        <ul class="schematic__list">
-          {% if mode == 'fixed' %}
-          <li><em class="sym">R</em><sub>B</sub> ต่อจาก V<sub>CC</sub> ไปยัง Base</li>
-          <li><em class="sym">R</em><sub>C</sub> ต่อจาก V<sub>CC</sub> ไปยัง Collector</li>
-          <li>Emitter ต่อลงกราวด์โดยตรง → <em class="sym">V</em><sub>E</sub> เป็นศูนย์</li>
-          {% else %}
-          <li><em class="sym">R</em><sub>B</sub> ต่อจาก V<sub>CC</sub> ไปยัง Base</li>
-          <li><em class="sym">R</em><sub>C</sub> ต่อจาก V<sub>CC</sub> ไปยัง Collector</li>
-          <li><em class="sym">R</em><sub>E</sub> ต่อจาก Emitter ลงกราวด์ → <em class="sym">V</em><sub>E</sub> ไม่เป็นศูนย์</li>
-          {% endif %}
-        </ul>
-        <p class="schematic__values">
-          V<sub>CC</sub> = {{ form['vcc'] }} {{ unit_text[units['vcc']] }} ·
-          R<sub>B</sub> = {{ form['rb'] }} {{ unit_text[units['rb']] }} ·
-          R<sub>C</sub> = {{ form['rc'] }} {{ unit_text[units['rc']] }}
-          {% if mode == 'emitter' %}·
-          R<sub>E</sub> = {{ form['re'] }} {{ unit_text[units['re']] }}{% endif %} ·
-          β = {{ form['beta'] }}
-        </p>
-      </div>
+      <svg class="circuit" viewBox="0 0 420 380" role="img"
+           aria-label="วงจรขยาย Common-Emitter แบบ Emitter Bias แหล่งจ่ายเดียว: RB จาก VCC ไป Base, RC จาก VCC ไป Collector, RE จาก Emitter ลงกราวด์">
+        <g class="circuit__wire">
+          <path d="M270,45 L270,70"/>
+          <path d="M150,70 L270,70"/>
+          <path d="M150,70 L150,85"/>
+          <path d="M150,155 L150,190"/>
+          <path d="M150,190 L235,190"/>
+          <path d="M270,140 L270,155"/>
+          <path d="M270,225 L270,255"/>
+          <path d="M270,315 L270,340"/>
+
+          <path d="M150,85 L162,95 L138,105 L162,115 L138,125 L162,135 L138,145 L150,155"/>
+          <path d="M270,70 L270,85 L282,95 L258,105 L282,115 L258,125 L270,135 L270,140"/>
+          <path d="M270,255 L270,265 L282,275 L258,285 L282,295 L258,305 L270,315 L270,340"/>
+
+          <path d="M235,175 L270,155"/>
+          <path d="M235,205 L270,225"/>
+        </g>
+
+        <circle class="circuit__body" cx="255" cy="190" r="42"/>
+        <line class="circuit__wire circuit__bar" x1="235" y1="168" x2="235" y2="212"/>
+        <polygon class="circuit__arrow" points="270,225 259.3,223.5 263.3,216.5"/>
+
+        <circle class="circuit__dot" cx="150" cy="190" r="3.5"/>
+        <circle class="circuit__dot" cx="270" cy="45" r="3.5"/>
+
+        <g class="circuit__ground">
+          <line x1="254" y1="340" x2="286" y2="340"/>
+          <line x1="260" y1="347" x2="280" y2="347"/>
+          <line x1="266" y1="354" x2="274" y2="354"/>
+        </g>
+
+        <g class="circuit__text">
+          <text class="circuit__value" x="270" y="24" text-anchor="middle"><tspan font-style="italic">V</tspan><tspan baseline-shift="sub" font-size="9">CC</tspan> = {{ form['vcc'] }} {{ unit_text[units['vcc']] }}</text>
+
+          <text x="128" y="113" text-anchor="end"><tspan font-style="italic">R</tspan><tspan baseline-shift="sub" font-size="9">B</tspan></text>
+          <text class="circuit__value" x="128" y="131" text-anchor="end">{{ form['rb'] }} {{ unit_text[units['rb']] }}</text>
+
+          <text x="292" y="101"><tspan font-style="italic">R</tspan><tspan baseline-shift="sub" font-size="9">C</tspan></text>
+          <text class="circuit__value" x="292" y="119">{{ form['rc'] }} {{ unit_text[units['rc']] }}</text>
+
+          <text x="292" y="281"><tspan font-style="italic">R</tspan><tspan baseline-shift="sub" font-size="9">E</tspan></text>
+          <text class="circuit__value" x="292" y="299">{{ form['re'] }} {{ unit_text[units['re']] }}</text>
+
+          <text x="305" y="168"><tspan font-style="italic">Q</tspan><tspan baseline-shift="sub" font-size="9">1</tspan></text>
+          <text x="305" y="186">NPN</text>
+          <text x="305" y="204">(β = {{ form['beta'] }})</text>
+        </g>
+      </svg>
       {% endif %}
     </section>
 
