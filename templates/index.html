@@ -151,6 +151,8 @@
       {% if mode == 'divider' %}
       <svg class="circuit" viewBox="0 0 420 380" role="img"
            aria-label="วงจรขยาย Common-Emitter แบบ Voltage-Divider Bias">
+        <circle class="circuit__body" cx="255" cy="190" r="42"/>
+
         <g class="circuit__wire">
           <path d="M270,45 L270,70"/>
           <path d="M150,70 L270,70"/>
@@ -159,8 +161,8 @@
           <path d="M150,190 L235,190"/>
           <path d="M150,190 L150,205"/>
           <path d="M150,275 L150,340"/>
-          <path d="M270,140 L270,155"/>
-          <path d="M270,225 L270,255"/>
+          <path d="M270,140 L270,150.8"/>
+          <path d="M270,229.2 L270,255"/>
           <path d="M270,315 L270,340"/>
 
           <path d="M150,85 L162,95 L138,105 L162,115 L138,125 L162,135 L138,145 L150,155"/>
@@ -168,13 +170,13 @@
           <path d="M270,70 L270,85 L282,95 L258,105 L282,115 L258,125 L270,135 L270,140"/>
           <path d="M270,255 L270,265 L282,275 L258,285 L282,295 L258,305 L270,315 L270,340"/>
 
-          <path d="M235,175 L270,155"/>
-          <path d="M235,205 L270,225"/>
+          <path d="M235,175 L270,150.8"/>
+          <path d="M235,205 L270,229.2"/>
         </g>
 
-        <circle class="circuit__body" cx="255" cy="190" r="42"/>
+        <circle class="circuit__outline" cx="255" cy="190" r="42"/>
         <line class="circuit__wire circuit__bar" x1="235" y1="168" x2="235" y2="212"/>
-        <polygon class="circuit__arrow" points="270,225 259.3,223.5 263.3,216.5"/>
+        <polygon class="circuit__arrow" points="268.5,228.2 254.9,225.1 260.8,216.5"/>
 
         <circle class="circuit__dot" cx="150" cy="190" r="3.5"/>
         <circle class="circuit__dot" cx="270" cy="45" r="3.5"/>
@@ -211,25 +213,27 @@
       {% elif mode == 'fixed' %}
       <svg class="circuit" viewBox="0 0 420 380" role="img"
            aria-label="วงจรขยาย Common-Emitter แบบ Fixed Bias: RB จาก VCC ไป Base, RC จาก VCC ไป Collector, Emitter ต่อลงกราวด์โดยตรง">
+        <circle class="circuit__body" cx="255" cy="190" r="42"/>
+
         <g class="circuit__wire">
           <path d="M270,45 L270,70"/>
           <path d="M150,70 L270,70"/>
           <path d="M150,70 L150,85"/>
           <path d="M150,155 L150,190"/>
           <path d="M150,190 L235,190"/>
-          <path d="M270,140 L270,155"/>
-          <path d="M270,225 L270,340"/>
+          <path d="M270,140 L270,150.8"/>
+          <path d="M270,229.2 L270,340"/>
 
           <path d="M150,85 L162,95 L138,105 L162,115 L138,125 L162,135 L138,145 L150,155"/>
           <path d="M270,70 L270,85 L282,95 L258,105 L282,115 L258,125 L270,135 L270,140"/>
 
-          <path d="M235,175 L270,155"/>
-          <path d="M235,205 L270,225"/>
+          <path d="M235,175 L270,150.8"/>
+          <path d="M235,205 L270,229.2"/>
         </g>
 
-        <circle class="circuit__body" cx="255" cy="190" r="42"/>
+        <circle class="circuit__outline" cx="255" cy="190" r="42"/>
         <line class="circuit__wire circuit__bar" x1="235" y1="168" x2="235" y2="212"/>
-        <polygon class="circuit__arrow" points="270,225 259.3,223.5 263.3,216.5"/>
+        <polygon class="circuit__arrow" points="268.5,228.2 254.9,225.1 260.8,216.5"/>
 
         <circle class="circuit__dot" cx="150" cy="190" r="3.5"/>
         <circle class="circuit__dot" cx="270" cy="45" r="3.5"/>
@@ -259,27 +263,29 @@
       {% else %}
       <svg class="circuit" viewBox="0 0 420 380" role="img"
            aria-label="วงจรขยาย Common-Emitter แบบ Emitter Bias แหล่งจ่ายเดียว: RB จาก VCC ไป Base, RC จาก VCC ไป Collector, RE จาก Emitter ลงกราวด์">
+        <circle class="circuit__body" cx="255" cy="190" r="42"/>
+
         <g class="circuit__wire">
           <path d="M270,45 L270,70"/>
           <path d="M150,70 L270,70"/>
           <path d="M150,70 L150,85"/>
           <path d="M150,155 L150,190"/>
           <path d="M150,190 L235,190"/>
-          <path d="M270,140 L270,155"/>
-          <path d="M270,225 L270,255"/>
+          <path d="M270,140 L270,150.8"/>
+          <path d="M270,229.2 L270,255"/>
           <path d="M270,315 L270,340"/>
 
           <path d="M150,85 L162,95 L138,105 L162,115 L138,125 L162,135 L138,145 L150,155"/>
           <path d="M270,70 L270,85 L282,95 L258,105 L282,115 L258,125 L270,135 L270,140"/>
           <path d="M270,255 L270,265 L282,275 L258,285 L282,295 L258,305 L270,315 L270,340"/>
 
-          <path d="M235,175 L270,155"/>
-          <path d="M235,205 L270,225"/>
+          <path d="M235,175 L270,150.8"/>
+          <path d="M235,205 L270,229.2"/>
         </g>
 
-        <circle class="circuit__body" cx="255" cy="190" r="42"/>
+        <circle class="circuit__outline" cx="255" cy="190" r="42"/>
         <line class="circuit__wire circuit__bar" x1="235" y1="168" x2="235" y2="212"/>
-        <polygon class="circuit__arrow" points="270,225 259.3,223.5 263.3,216.5"/>
+        <polygon class="circuit__arrow" points="268.5,228.2 254.9,225.1 260.8,216.5"/>
 
         <circle class="circuit__dot" cx="150" cy="190" r="3.5"/>
         <circle class="circuit__dot" cx="270" cy="45" r="3.5"/>

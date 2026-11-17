@@ -301,6 +301,11 @@ sub {
 
 .circuit__body {
   fill: #dceafb;
+  stroke: none;
+}
+
+.circuit__outline {
+  fill: none;
   stroke: var(--ink);
   stroke-width: 2.3;
 }
