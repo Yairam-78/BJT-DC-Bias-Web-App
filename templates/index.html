@@ -4,7 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BJT DC Bias Calculator · Lab 03</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </head>
 <body>
 {% set unit_text = {'ohm': 'Ω', 'kohm': 'kΩ', 'mohm': 'MΩ', 'v': 'V', 'mv': 'mV'} %}
@@ -403,6 +405,7 @@
       <div>
         <p class="kicker">ENG29 2121 · LAB 04</p>
         <h2 id="sim-title">CE Amplifier Simulator</h2>
+        <p class="lab04__bridge">Lab 03 → Lab 04 · ผลคำนวณเดิมเป็นตัวอ้างอิง ไม่ใช่ตัวแทนผล SPICE</p>
         <p class="lab04__intro">
           วงจร CE Voltage Divider เดียวกัน ผลทุกค่ามาจากการรัน ngspice จริง (.op / .ac / .tran)
           ไม่ใช่ค่าที่ฝังไว้ในหน้าเว็บ และไม่ไปแก้ผลคำนวณ Lab 03 ด้านบน
@@ -412,6 +415,21 @@
         <span class="engine-badge__dot" aria-hidden="true"></span>
         <span>Engine: <strong>ngspice</strong></span>
       </div>
+    </div>
+
+    <div class="model-alert" role="note" aria-label="PROVISIONAL model">
+      <span class="model-alert__tag">PROVISIONAL</span>
+      <span>
+        ยังไม่มี Starter Kit หรือโมเดลที่อาจารย์รับรอง — ผล SPICE ด้านล่างใช้โมเดลชั่วคราว
+        และต้องเปลี่ยนโมเดลก่อนส่งงานจริง
+      </span>
+    </div>
+
+    <div class="run-status" id="sim-run-state" data-state="{{ sim_status }}"
+         role="status" aria-live="polite" aria-busy="false">
+      <span class="run-status__dot" aria-hidden="true"></span>
+      <span class="run-status__label">{{ sim_status }}</span>
+      <span class="run-status__detail">{{ sim_status_detail }}</span>
     </div>
 
     <div class="lab04__layout">
@@ -435,7 +453,7 @@
           <div class="field">
             <label for="{{ name }}">
               <em class="sym">{{ sim_labels[name][0] }}</em>{% if sim_labels[name][1:] %}<sub>{{ sim_labels[name][1:] }}</sub>{% endif %}
-              <span class="field__hint">({{ name }})</span>
+              <span class="field__hint">({{ sim_hints[name] }})</span>
             </label>
             <span class="field__input">
               <input id="{{ name }}" name="{{ name }}" type="number" step="any"
@@ -486,7 +504,7 @@
           </span>
         </div>
 
-        <button type="submit" class="button">
+        <button type="submit" class="button" id="sim-run-button">
           <span aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
               <path d="M5 12h4l2-6 3 12 2-6h3"/>
@@ -496,20 +514,47 @@
         </button>
         <p class="hint">
           ค่าเริ่มต้นตามใบงาน: VCC 12 V · R1 100 kΩ · R2 22 kΩ · RC 2.2 kΩ · RE 1 kΩ ·
-          RL 10 kΩ · Cin/Cout 10 µF · 10 mV @ 1 kHz · β ใช้เป็นค่าอ้างอิงกับ Lab 03 เท่านั้น
-          (โมเดล SPICE มี Bf ของตัวเอง)
+          RL 10 kΩ · Cin/Cout 10 µF · 10 mV @ 1 kHz ·
+          β และ Analytical VBE ใช้เฉพาะตารางอ้างอิง Lab 03 — SPICE ใช้ Bf จากไฟล์โมเดล
         </p>
       </form>
 
       <div class="card sim-results" aria-live="polite">
         <h3>Simulation Results</h3>
 
+        {% if analytical %}
+        <section class="comparison-panel comparison-panel--analytical" aria-labelledby="analytical-title">
+          <div class="comparison-panel__head">
+            <h4 id="analytical-title">Analytical Reference <code>dc_bias.py</code></h4>
+            <p>Forward-Active · β {{ analytical.beta }} · VBE {{ analytical.vbe }} V</p>
+          </div>
+          <table class="results results--compact">
+            <tbody>
+              <tr><th scope="row">V<sub>B</sub></th><td>{{ analytical.vb }} <span class="unit">V</span></td></tr>
+              <tr><th scope="row">V<sub>E</sub></th><td>{{ analytical.ve }} <span class="unit">V</span></td></tr>
+              <tr><th scope="row">V<sub>C</sub></th><td>{{ analytical.vc }} <span class="unit">V</span></td></tr>
+              <tr><th scope="row">V<sub>CE</sub></th><td>{{ analytical.vce }} <span class="unit">V</span></td></tr>
+              <tr><th scope="row">I<sub>B</sub></th><td>{{ analytical.ib_ua }} <span class="unit">µA</span></td></tr>
+              <tr><th scope="row">I<sub>C</sub></th><td>{{ analytical.ic_ma }} <span class="unit">mA</span></td></tr>
+              <tr><th scope="row">I<sub>E</sub></th><td>{{ analytical.ie_ma }} <span class="unit">mA</span></td></tr>
+            </tbody>
+          </table>
+          <p class="note">ค่าจากแบบจำลอง β คงที่ของ Lab 03 — ใช้เปรียบเทียบเท่านั้น ไม่ใช่ผล ngspice</p>
+        </section>
+        {% elif analytical_error %}
+          <div class="errors" role="alert"><p>อ้างอิงเชิงวิเคราะห์ไม่ได้: {{ analytical_error }}</p></div>
+        {% endif %}
+
         {% if sim_result %}
+          <div class="source-divider">
+            <span>SPICE / ngspice</span>
+            <span>ผลจาก solver จริง</span>
+          </div>
           <p class="engine-line">
-            <span class="badge badge--ok">RUN OK</span>
+            <span class="badge badge--ok">SUCCESS</span>
             <strong>{{ sim_result.version }}</strong>
+            · model <code>{{ sim_result.model_name }}</code> (Bf จาก .model)
             · {{ sim_result.model_label }}
-            · model <code>{{ sim_result.model_name }}</code>
           </p>
 
           {% if sim_result.op %}
@@ -585,14 +630,12 @@
           <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>
         </svg>
       </span>
-      Lab 03 Goal
+      ภาพรวมการใช้งาน
     </div>
     <p>
-      <strong>One app, three bias circuits:</strong>
-      add Fixed Bias and single-supply Emitter Bias to the existing Flask calculator while
-      the voltage-divider result stays unchanged. Every mode returns
-      V<sub>B</sub>, V<sub>E</sub>, V<sub>C</sub>, V<sub>CE</sub>, I<sub>B</sub>, I<sub>C</sub>, I<sub>E</sub>
-      from Python, and the acceptance cases A1–A5 are checked in a real browser.
+      <strong>Lab 03 → Lab 04:</strong>
+      เริ่มจากเครื่องคำนวณจุดทำงานสามวงจร แล้วต่อยอดเป็นเครื่องจำลองขยายสัญญาณ
+      ค่าที่แสดงมาจาก Python หรือ ngspice ทุกครั้ง และแยกป้ายที่มาของผลไว้ให้เห็นชัด
     </p>
   </aside>
 </main>

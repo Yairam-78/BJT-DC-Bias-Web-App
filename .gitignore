@@ -4,5 +4,6 @@ __pycache__/
 .env
 .pytest_cache/
 .superpowers/
+.playwright-mcp/
 reference/run.log
 reference/run.raw

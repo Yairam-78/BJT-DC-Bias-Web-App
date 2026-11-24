@@ -102,7 +102,7 @@ DEFAULT_UNITS = {
 # solver adapter.
 SIM_FIELDS = (
     "svcc", "sr1", "sr2", "src", "sre", "srl",
-    "scin", "scout", "sampl", "sfreq", "sbeta",
+    "scin", "scout", "sampl", "svbe", "sfreq", "sbeta",
 )
 
 SIM_FIELD_LABELS = {
@@ -115,8 +115,26 @@ SIM_FIELD_LABELS = {
     "scin": "Cin",
     "scout": "Cout",
     "sampl": "Amplitude",
+    "svbe": "VBE",
     "sfreq": "Frequency",
     "sbeta": "β",
+}
+
+# Human-readable hints keep the Lab 04 form consistent with Lab 03; the raw
+# form identifiers are an implementation detail and must not leak into the UI.
+SIM_FIELD_HINTS = {
+    "svcc": "Supply Voltage",
+    "sr1": "Upper Divider",
+    "sr2": "Lower Divider",
+    "src": "Collector Resistor",
+    "sre": "Emitter Resistor",
+    "srl": "Load Resistor",
+    "scin": "Input Coupling",
+    "scout": "Output Coupling",
+    "sampl": "Source Amplitude",
+    "svbe": "Analytical VBE",
+    "sfreq": "Source Frequency",
+    "sbeta": "Analytical β",
 }
 
 SIM_UNIT_FACTORS = {
@@ -129,6 +147,7 @@ SIM_UNIT_FACTORS = {
     "scin": {"f": 1.0, "u": 1e-6, "n": 1e-9, "p": 1e-12},
     "scout": {"f": 1.0, "u": 1e-6, "n": 1e-9, "p": 1e-12},
     "sampl": {"v": 1.0, "mv": 1e-3},
+    "svbe": {"v": 1.0, "mv": 1e-3},
     "sfreq": {"hz": 1.0, "khz": 1e3, "mhz": 1e6},
     "sbeta": {},
 }
@@ -143,6 +162,7 @@ SIM_DEFAULT_FORM = {
     "scin": "10",
     "scout": "10",
     "sampl": "10",
+    "svbe": "0.7",
     "sfreq": "1",
     "sbeta": "150",
     "ssource": "ac_sine",
@@ -162,6 +182,7 @@ SIM_DEFAULT_UNITS = {
     "scin": "u",
     "scout": "u",
     "sampl": "mv",
+    "svbe": "v",
     "sfreq": "khz",
     "sbeta": "",
 }
@@ -319,6 +340,45 @@ def _make_sim_input(values: dict, raw: dict) -> spice_engine.SimulationInput:
     )
 
 
+def _analytical_reference(values: dict) -> dict:
+    """Return display-ready Lab 03 values beside the SPICE run.
+
+    The solver has its own Bf, so this approximation is deliberately computed
+    from the form's β/VBE through :func:`calculate_dc_bias` and never used as
+    a substitute for ngspice results.
+    """
+    result = calculate_dc_bias(
+        vcc=values["svcc"],
+        r1=values["sr1"],
+        r2=values["sr2"],
+        rc=values["src"],
+        re=values["sre"],
+        beta=values["sbeta"],
+        vbe=values["svbe"],
+    )
+    return {
+        "vb": f"{result.vb:.3f}",
+        "ve": f"{result.ve:.3f}",
+        "vc": f"{result.vc:.3f}",
+        "vce": f"{result.vce:.3f}",
+        "ib_ua": f"{result.ib * 1e6:.3f}",
+        "ic_ma": f"{result.ic * 1000:.3f}",
+        "ie_ma": f"{result.ie * 1000:.3f}",
+        "beta": f"{values['sbeta']:g}",
+        "vbe": f"{values['svbe']:.3f}",
+        "region": result.region,
+        "warnings": list(result.warnings),
+    }
+
+
+STATUS_DETAILS = {
+    "READY": "พร้อมรัน ngspice — กรอกค่าแล้วกด Run",
+    "RUNNING": "กำลังรัน ngspice — กรุณารอผลลัพธ์",
+    "SUCCESS": "ได้ผลจาก ngspice แล้วด้านล่าง",
+    "ERROR": "ตรวจข้อความผิดพลาดแล้วลองใหม่",
+}
+
+
 def _render(
     *,
     mode: str,
@@ -330,8 +390,15 @@ def _render(
     sim_units: dict | None = None,
     sim_result=None,
     sim_errors: dict | None = None,
+    sim_hints: dict | None = None,
+    sim_status: str | None = None,
+    sim_status_detail: str | None = None,
+    analytical: dict | None = None,
+    analytical_error: str | None = None,
 ):
     config = MODES[mode]
+    if sim_status is None:
+        sim_status = "ERROR" if sim_errors else "SUCCESS" if sim_result else "READY"
     return render_template(
         "index.html",
         mode=mode,
@@ -349,8 +416,13 @@ def _render(
         sim_errors=sim_errors or {},
         sim_fields=SIM_FIELDS,
         sim_labels=SIM_FIELD_LABELS,
+        sim_hints=SIM_FIELD_HINTS if sim_hints is None else sim_hints,
         sim_units_map=SIM_UNIT_FACTORS,
         sim_options=SIM_OPTIONS,
+        sim_status=sim_status,
+        sim_status_detail=sim_status_detail or STATUS_DETAILS[sim_status],
+        analytical=analytical,
+        analytical_error=analytical_error,
     )
 
 
@@ -393,6 +465,16 @@ def simulate():
     raw, units = _read_sim_form(request.form)
     values, errors = _read_sim_values(raw, units)
     result = None
+    analytical = None
+    analytical_error = None
+
+    # The Lab 03 reference is computed even when the solver later fails, so the
+    # user can still compare it with the error instead of losing all context.
+    if not errors:
+        try:
+            analytical = _analytical_reference(values)
+        except ValueError as exc:
+            analytical_error = str(exc)
 
     if not errors:
         try:
@@ -412,4 +494,6 @@ def simulate():
         sim_units=units,
         sim_result=result,
         sim_errors=errors,
+        analytical=analytical,
+        analytical_error=analytical_error,
     )

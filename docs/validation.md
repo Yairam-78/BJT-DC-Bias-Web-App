@@ -82,9 +82,9 @@ python -m flask --app app run
 
 # Validation — Lab 03 (Fixed Bias และ Emitter Bias)
 
-วันที่ตรวจ: 2026-11-17
-วิธีตรวจ: **OpenCode Browser** (เบราว์เซอร์จริงบนเครื่องนี้) — ไม่ได้ใช้ Playwright MCP
-เพราะเครื่องที่ตรวจยังไม่มี Node.js (บันทึกเป็น `NOT RUN` ตามใบงาน)
+วันที่ตรวจ: 2026-11-17 (รอบแรก) · 2026-11-24 (ตรวจซ้ำ)
+วิธีตรวจ: รอบแรกใช้ **OpenCode Browser** เพราะยังไม่มี Node.js — ภายหลังติดตั้ง Node.js และ
+**Playwright MCP** แล้วจึงตรวจซ้ำ A1–A3 อีกครั้งในรอบ Lab 04
 สภาพแวดล้อม: Flask 3.1.3 · Python 3.14.2 · `http://127.0.0.1:5000/`
 
 ## ค่าคงที่ร่วมของ A1–A5
@@ -151,7 +151,8 @@ VCE = 9.932 − 1.899                    = 8.033 V
 | **A4** | Emitter · เหมือน A3 แต่ RE=2 kΩ | IC ลดจาก A3 · VCE 8.033 V | IB 9.401 µA · IC **0.940 mA** · IE 0.950 mA · VB 2.599 V · VE 1.899 V · VC 9.932 V · VCE **8.033 V** | OpenCode Browser | **PASS** |
 | **A5** | Fixed · RB=0 | มีข้อความให้แก้ RB เว็บไม่ล่ม ไม่โชว์ผลเดิม | ข้อความ `RB ต้องมากกว่า 0 (ได้รับ 0.0)` · ไม่มีตารางผล · HTTP 200 | OpenCode Browser | **PASS** |
 
-**Playwright MCP:** `NOT RUN` — เครื่องที่ตรวจไม่มี Node.js (`node --version` ไม่พบ) จึงรัน MCP Server ไม่ได้
+**Playwright MCP:** รอบแรก `NOT RUN` (ไม่มี Node.js) — รอบ Lab 04 ตรวจซ้ำ A1–A3 สำเร็จแล้ว
+ด้วย MCP Server จริง ดูตาราง B1 ในหัวข้อ Lab 04 ด้านล่าง
 
 ### หลักฐานจากหน้าเว็บ
 
@@ -192,16 +193,20 @@ test เดิมทั้ง 25 รายการยังผ่านทั�
 # Validation — Lab 04 (CE Amplifier Simulator)
 
 วันที่ตรวจ: 2026-11-24
-วิธีตรวจ: **OpenCode Browser** (เบราว์เซอร์จริงที่เชื่อมกับ session นี้) · `http://127.0.0.1:5000/`
+วิธีตรวจ: **Playwright MCP จริง** (`@playwright/mcp@latest`, Chrome headless, stdio) ·
+`http://127.0.0.1:5000/` · viewport 1280×900 และ 390×844
 สภาพแวดล้อม: Python 3.14.2 · Flask 3.1.3 · ngspice 47 (MSYS2 `mingw-w64-ucrt-x86_64-ngspice`) ·
-`solver = C:\msys64\ucrt64\bin\ngspice.exe`
+`solver = C:\msys64\ucrt64\bin\ngspice.exe` · Node.js 22 · MCP server `Playwright 1.66.0-alpha`
 
-**Playwright MCP:** `NOT RUN` — แม้ตอนนี้จะติดตั้ง Node.js แล้ว แต่ยังไม่ได้ตั้งค่า/ยืนยัน MCP server
-ตามเส้นทางของใบงาน ผู้ตรวจเลือกใช้ OpenCode Browser ตามที่ตกลงกัน จึงไม่กล่าวอ้างว่าเป็นผล Playwright MCP
+**Playwright MCP:** `PASS` — initialize สำเร็จ (25 tools) และขับผ่าน `tools/call` จริง
+ผลรอบแรกถูกแจ้งผู้ใช้ก่อนแก้ UI เพิ่มเติม จากนั้นรันรอบสุดท้ายอีกครั้งและเก็บ before/after screenshot
+**หมายเหตุ:** MCP tools ไม่โผล่ใน tool catalog ของ session นี้ จึงขับ MCP server ตรงผ่าน stdio ด้วย helper
+แต่ทุกค่าอ่านจากเบราว์เซอร์จริงที่โหลด Flask — ไม่ใช่ mock/hard-code
 
 **โมเดลที่ใช้จริง:** `reference/provisional_2n3904.bjt` (`.model Q2N3904`)
 สถานะ **PROVISIONAL — ยังไม่ใช่ Starter Kit / โมเดลที่อาจารย์รับรอง**
-หน้าเว็บแสดงป้าย `Local reference model (not instructor-verified)` ทุกครั้ง
+หน้าเว็บแสดงป้าย `PROVISIONAL` ใกล้หัวข้อและปุ่ม Run รวมถึง
+`Local reference model (not instructor-verified)` ในบรรทัด provenance ทุกครั้ง
 
 ## หลักการตรวจความถูกต้อง
 
@@ -210,33 +215,69 @@ test เดิมทั้ง 25 รายการยังผ่านทั�
 - ตรวจว่า HTTP `POST /simulate` คืน 200 และหน้าเว็บ render กราฟ `<polyline>` จากข้อมูลรันนั้น
 - เปรียบเทียบก่อน/หลังเมื่อเปลี่ยน RE และ Amplitude เพื่อยืนยันว่าไม่มีค่าหรือกราฟ hard-code
 - หน้าเว็บแสดง log/netlist ได้ใน `<details>` เพื่อให้ตรวจ provenance ได้
+- อ่าน status จริงสามชั้น: `RUNNING` ขณะ submit (probe จับ `aria-current=step`, `aria-busy=true`,
+  ปุ่ม disabled) → `SUCCESS` หรือ `ERROR` หลัง render
+- แยกตาราง **Analytical Reference (`dc_bias.py`)** ออกจาก **SPICE / ngspice** ในผลลัพธ์เดียวกัน
+- ตรวจ Chrome console และ detector ของ Impeccable: console 0 error และ detector 0 finding ทั้งสอง viewport
 
 ## ตาราง B1–B8 (ผลที่เห็นจริงจากหน้าเว็บ)
 
-| Case | Method | Input | Expected / Reference | Observed | Evidence | Status |
+| Case | Method (Playwright MCP) | Input | Expected / Reference | Observed (final run) | Evidence | Status |
 |---|---|---|---|---|---|---|
-| **B1** | OpenCode Browser · กดการ์ด Fixed → Emitter → Divider แล้วกด Calculate | ค่า Lab 03 เดิม: VCC 12 V, RC 2.2 kΩ, β 100, VBE 0.7 V, RB 1 MΩ / R1 100 k, R2 22 k, RE 1 k | ผลเดิมตรง A1–A3 ใน validation เดิม | Fixed: IC 1.130 mA, VCE 9.514 V · Emitter: IC 1.026 mA, VCE 8.705 V · Divider: IC 1.230 mA, VCE 8.052 V | ข้อความที่อ่านจากหน้าเว็บ + `docs/validation.md` ชุด A1–A3 | **PASS** |
-| **B2** | เลือก Analysis `.op only` → Run ngspice | 12 V / 100 k / 22 k / 2.2 k / 1 k, model local reference | มี `RUN OK`, model, status และ VB/VE/VC/VCE/IC จาก ngspice | `RUN OK · Local reference model (not instructor-verified) · Q2N3904`; VB 2.004 V · VE 1.333 V · VC 9.087 V · VCE 7.754 V · IB 8.887 µA · IC 1.324 mA · IE 1.333 mA · Forward-active | หน้า Simulation Results + log/netlist ใน `<details>` | **PASS** |
-| **B3** | เปลี่ยนเฉพาะ RE แล้ว Run `.op` ซ้ำ | RE 1 kΩ → 2 kΩ (ค่าอื่นคงเดิม) | Operating point ต้องเปลี่ยน ไม่ใช่ค่าค้าง | ก่อน: VE 1.333 V, VC 9.087 V, IC 1.324 mA · หลัง: VE 1.419 V, VC 10.450 V, IC 0.704 mA, IB 5.060 µA | ผลก่อน/หลังจากหน้าเว็บ | **PASS** |
-| **B4** | เลือก Analysis `.op + .ac + .tran` → Run → อ่านกราฟ Bode | AC 1 Hz–10 MHz, 10 mV @ 1 kHz | แกน Frequency พร้อมหน่วย, Gain dB, Phase deg จากรันจริง | Midband gain **4.89 dB**, phase **179.99°** (เทียบเท่า ≈ −180°, CE กลับเฟส), fL **1.785 Hz**, fH `not determined in sweep range`; กราฟ 2 รูปมีแกน `Frequency (Hz, log10)` / `Gain (dB)` / `Phase (deg)` | DOM: `svg.plot` มี `<polyline>` จริง 3 รูป + `POST /simulate` status 200 | **PASS** |
-| **B5** | อ่านกราฟ transient จากรันเดียวกัน | 10 mV peak @ 1 kHz, no bypass capacitor | เห็น Vin/Vout ตามเวลา มีป้ายเวลา/แรงดัน และสัญญาณกลับเฟส | Vin pp **20.00 mV**, Vout pp **35.12 mV**, \|Vout/Vin\| **1.756**, `Phase: Inverted (≈180°)`; แกน `Time (ms)` / `Voltage (V)`, legend `Vin`, `Vout`, polyline 2 เส้น | `docs/evidence/desktop_lab04.png` + ข้อความจากหน้าเว็บ | **PASS** |
-| **B6** | เปลี่ยน Amplitude 10 → 20 mV แล้ว Run ซ้ำ | Amplitude 20 mV, ความถี่ 1 kHz, ค่าอื่นคงเดิม | Waveform ต้องเปลี่ยนตามค่า ไม่ใช่กราฟ hard-code | Vin pp 20.00 → **40.00 mV**, Vout pp 35.12 → **70.23 mV**, gain ยัง ≈ **1.756** → waveform ขยาย 2× ตามค่าที่ป้อน | ผลก่อน/หลังจากหน้าเว็บ | **PASS** |
-| **B7** | ใส่ RE = 0 แล้ว Run | `sre=0` | แจ้ง error เป็นภาษาไทย ไม่ค้าง ไม่โชว์ผลสำเร็จปลอม | ข้อความ `RE ต้องมากกว่า 0` + `กรุณาแก้ไขค่าที่ไม่ถูกต้อง (1 รายการ)`; ไม่มี `RUN OK`, ไม่มี `<polyline>` | `docs/evidence/error_re_zero.png` | **PASS** |
-| **B8** | UI | เปิดหน้าเว็บจริงแบบ desktop และแบบ viewport กว้าง 390 px (iframe ในเบราว์เซอร์จริง) แล้วสลับโหมด | ปุ่ม/หน่วย/กราฟอ่านได้ ไม่ตัดเนื้อหาสำคัญ | Desktop: layout 2 คอลัมน์, กราฟ 3 รูปแสดงครบ · 390 px: `matchMedia('(max-width: 1080px)')` และ `(max-width: 560px)` = true, `.lab04__layout` เป็น 1 คอลัมน์ (347 px), สลับไป Fixed Bias สำเร็จ, Run ngspice สำเร็จและมีกราฟ 3 รูป | `docs/evidence/desktop_lab04.png`, `docs/evidence/mobile_lab04.png`, `docs/evidence/mobile_frame.html` | **PASS** |
+| **B1** | `browser_navigate ?mode=fixed/emitter/divider` → `browser_fill_form` → `browser_click`Calculate | ค่า Lab 03 เดิม: VCC 12 V, RC 2.2 kΩ, β 100, VBE 0.7 V, RB 1 MΩ / R1 100 k, R2 22 k, RE 1 k | ผลเดิมตรง A1–A3 | Fixed: IC **1.130 mA**, VCE **9.514 V** · Emitter: IC **1.026 mA**, VCE **8.705 V** · Divider: IC **1.230 mA**, VCE **8.052 V** | rows ที่อ่านจาก DOM จริง | **PASS** |
+| **B2** | `browser_select_option sanalysis=op` → Run ngspice | 12 V / 100 k / 22 k / 2.2 k / 1 k, β 150, VBE 0.7 V, local reference model | มี `SUCCESS`, engine/model, status และผล `.op` แยกจาก analytical | `SUCCESS · ngspice (version unknown) · Q2N3904 (Bf จาก .model) · Local reference model (not instructor-verified)`; **Analytical** VB 2.008 / VE 1.308 / VC 9.142 / VCE 7.834 V, IB 8.661 µA, IC 1.299 mA · **SPICE** VB 2.004 / VE 1.333 / VC 9.087 / VCE 7.754 V, IB 8.887 µA, IC 1.324 mA · `PROVISIONAL` แสดงใกล้หัวข้อ | `docs/evidence/playwright_final_results.json`, `docs/evidence/playwright_final_desktop.png` | **PASS** |
+| **B3** | เปลี่ยนเฉพาะ `sre=2` แล้ว Run `.op` ซ้ำ | RE 1 kΩ → 2 kΩ (ค่าอื่นคงเดิม) | Operating point ต้องเปลี่ยน ไม่ใช่ค่าค้าง | Analytical เปลี่ยน IC 1.299 → **0.686 mA**, VC 9.142 → **10.490 V** · SPICE เปลี่ยน IC 1.324 → **0.704 mA**, VE 1.333 → **1.419 V**, VC 9.087 → **10.450 V**, IB 8.887 → **5.060 µA** | ผลก่อน/หลังจาก DOM จริง | **PASS** |
+| **B4** | `sanalysis=all` → Run → อ่านตารางและ `svg.plot` | AC 1 Hz–10 MHz, 10 mV @ 1 kHz | แกน Frequency พร้อมหน่วย, Gain dB, Phase deg จากรันจริง | Midband gain **4.89 dB**, phase **179.99°** (อ้างอิงเฟสของ source; `.tran` ยืนยันกลับเฟส), fL **1.785 Hz**, fH `not determined in sweep range`; `<polyline>` **4** เส้น; แกน `Frequency (Hz, log10)` / `Gain (dB)` / `Phase (deg)` | `docs/evidence/playwright_final_results.json` | **PASS** |
+| **B5** | อ่าน transient จากรัน B4 เดียวกัน | 10 mV peak @ 1 kHz, no bypass capacitor | เห็น Vin/Vout ตามเวลา มีป้ายเวลา/แรงดัน และสัญญาณกลับเฟส | Vin pp **20.00 mV**, Vout pp **35.12 mV**, \|Vout/Vin\| **1.756**, `Phase: Inverted (≈180°)`; แกน `Time (ms)` / `Voltage (V)`, legend `Vin`, `Vout` | `docs/evidence/playwright_final_desktop.png` | **PASS** |
+| **B6** | เปลี่ยน `sampl=20` แล้ว Run ซ้ำ | Amplitude 20 mV, ความถี่ 1 kHz, ค่าอื่นคงเดิม | Waveform ต้องเปลี่ยนตามค่า ไม่ใช่กราฟ hard-code | Vin pp 20.00 → **40.00 mV**, Vout pp 35.12 → **70.23 mV**, gain ยัง **1.756** → ขยาย 2× ตามอินพุต | ผลก่อน/หลังจาก DOM จริง | **PASS** |
+| **B7** | ใส่ `sre=0` แล้ว Run | `sre=0` | แจ้ง error ภาษาไทย ไม่ค้าง ไม่โชว์ผลสำเร็จปลอม | `data-state="ERROR"`, `ERROR`, `กรุณาแก้ไขค่าที่ไม่ถูกต้อง (1 รายการ)`, `RE ต้องมากกว่า 0`; ไม่มี badge SUCCESS ไม่มี `<polyline>` | `docs/evidence/playwright_final_results.json` | **PASS** |
+| **B8** | `browser_resize 390x844` → `browser_navigate` → วัด `getBoundingClientRect` | viewport จริง 390 CSS px ไม่ใช่ iframe | ปุ่ม/หน่วย/กราฟอ่านได้ ไม่ตัดเนื้อหาสำคัญ | `innerWidth=390`, `.lab04__layout` เป็น 1 คอลัมน์ `362px`, ปุ่ม/กราฟทุกตัว `right <= innerWidth + 1`, สลับโหมดและ Run สำเร็จ | `docs/evidence/playwright_final_mobile.png` | **PASS** |
 
-> หมายเหตุ B8: OpenCode Browser ไม่มีเครื่องมือปรับ viewport โดยตรง จึงใช้หน้า `mobile_frame.html`
-> ที่ฝังแอปใน `<iframe width=390>` — iframe มี viewport จริง 390 CSS px และ media query ทำงานจริง
-> จึงไม่ใช่แค่การย่อภาพ screenshot
+### หลักฐานเสริมจาก Playwright MCP
+
+| สิ่งที่ตรวจ | ผลจริง |
+|---|---|
+| `RUNNING` feedback | ขณะ submit พบ `state=RUNNING`, `label=RUNNING`, `aria-current=step`, `aria-busy=true`, `button.disabled=true`; หลัง render เป็น `SUCCESS` |
+| Chrome console | `Total messages: 0 (Errors: 0, Warnings: 0)` หลังเพิ่ม `<link rel="icon" href="data:,">` |
+| Duplicate IDs / Jinja ค้าง | ไม่พบใน desktop และ mobile |
+| Impeccable detect | exit `0`, `[]` ที่ 1280×900 และ 390×844 (หลังแก้ contrast/hint/straggler) |
+|  Results provenance | ตาราง Analytical มีป้าย `dc_bias.py` + คำอธิบาย β/VBE คงที่; ตาราง SPICE อยู่ใต้ divider `SPICE / ngspice` และมี log/netlist ใน `<details>` |
+
+### ภาพหน้าจอ before / after (Playwright MCP จริง)
+
+| ไฟล์ | รอบ | viewport |
+|---|---|---|
+| `docs/evidence/playwright_initial_desktop.png` | ก่อนแก้ Impeccable P1/P2 | 1280×900 |
+| `docs/evidence/playwright_initial_mobile.png` | ก่อนแก้ Impeccable P1/P2 | 390×844 |
+| `docs/evidence/playwright_final_desktop.png` | หลังแก้ status/analytical/PROVISIONAL/hint/focus | 1280×900 |
+| `docs/evidence/playwright_final_mobile.png` | หลังแก้ status/analytical/PROVISIONAL/hint/focus | 390×844 |
+| `docs/evidence/playwright_initial_results.json` | ผล B1–B8 รอบแรก (ก่อนแก้) | — |
+| `docs/evidence/playwright_final_results.json` | ผล B1–B8 รอบสุดท้าย | — |
 
 ## ผล unittest รอบ Lab 04
 
 ```bash
-python -m unittest discover -s tests -v
-# Ran 45 tests ... OK
+.venv\Scripts\python -m unittest discover -s tests -v
+# Ran 51 tests ... OK
 ```
 
-แยกเป็น: 25 test เดิมของ Lab 03 ยังผ่าน + 20 test ใหม่สำหรับ `spice_engine.py` และ `/simulate`
-(ในจำนวนนี้มี 2 test ที่ครอบ `resolve_ngspice()` fallback)
+แยกเป็น: 25 test เดิมของ Lab 03 ยังผ่าน + 20 test เดิมของ Lab 04 (`spice_engine.py` และ `/simulate`)
++ 6 test ใหม่สำหรับ status hook, `RUNNING` script, SUCCESS/ERROR, engine failure และ analytical reference
+
+## รอบ Impeccable critique → polish → audit
+
+- Critique แบบ dual-agent ได้ **24/40** และแจ้งผู้ใช้ก่อนแก้UI
+  snapshot: `.impeccable/critique/2026-11-24T11-22-51Z__templates-index-html.md`
+- P1 ที่แก้แล้ว: `RUNNING → SUCCESS/ERROR` + ปุ่ม disabled, ตาราง Analytical แยกจาก SPICE,
+  ป้าย PROVISIONAL ย้ายขึ้นใกล้หัวข้อและปุ่ม Run
+- P2 ที่แก้แล้ว: hint เป็นภาษามนุษย์ (`Source Amplitude`, `Analytical VBE` ...),
+  `.goal` เปลี่ยนจาก assignment-speak เป็น “ภาพรวมการใช้งาน”, focus ring ใช้ `:focus-visible`
+  แทนการซ่อนด้วย `outline: none`, favicon 404 หายไป
+- ตรวจซ้ำด้วย detector ที่ 1280×900 และ 390×844: `[]` ทั้งสองรอบ
+- Audit รอบสุดท้ายได้ **17/20 (Good)** — P0/P1 = 0, P2 = 3, P3 = 1
+  report: `.impeccable/audit/2026-11-24T11-42-22Z__project.md`
+- เนื่องจากแก้ `templates/index.html` หลัง critique ทำให้ fingerprint เปลี่ยน จึงไม่ปิด snapshot เดิม
+  (ตามกติกา polish) และใช้ผล detect/browser รอบสุดท้ายเป็นหลักฐานแทน
 
 ## ความคลาดเคลื่อน / ข้อจำกัดที่ยังรู้
 

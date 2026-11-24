@@ -4,6 +4,7 @@ The engine is replaced by a stub so no ngspice process is started.
 """
 
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -30,6 +31,8 @@ def valid_form(**overrides):
         "scout_unit": "u",
         "sampl": "10",
         "sampl_unit": "mv",
+        "svbe": "0.7",
+        "svbe_unit": "v",
         "sfreq": "1",
         "sfreq_unit": "khz",
         "sbeta": "150",
@@ -138,6 +141,59 @@ class TestSimulatePage(unittest.TestCase):
         self.assertIn("การจำลองล้มเหลว", body)
         self.assertIn("program not found", body)
         self.assertNotIn("data-testid='ac-chart'", body)
+
+    def test_index_exposes_running_hook_and_readable_hints(self):
+        body = self.client.get("/").get_data(as_text=True)
+        self.assertIn('id="sim-run-state"', body)
+        self.assertIn('name="svbe"', body)
+        self.assertIn("app.js", body)
+        self.assertIn('rel="icon"', body)
+        self.assertIn("(Source Amplitude)", body)
+        self.assertNotIn("(svcc)", body)
+        self.assertNotIn("acceptance cases", body)
+        self.assertIn("Lab 03 → Lab 04", body)
+
+    def test_submit_script_sets_running_state(self):
+        script = (
+            Path(__file__).resolve().parents[1] / "static" / "app.js"
+        ).read_text(encoding="utf-8")
+        self.assertIn("RUNNING", script)
+        self.assertIn("disabled", script)
+        self.assertIn("aria-current", script)
+
+    def test_success_renders_success_status_and_provenance(self):
+        with patch.object(app_module.spice_engine, "run_simulation", return_value=fake_result()):
+            body = self.client.post("/simulate", data=valid_form()).get_data(as_text=True)
+        self.assertIn('data-state="SUCCESS"', body)
+        self.assertIn(">SUCCESS</span>", body)
+        self.assertIn("SPICE / ngspice", body)
+        self.assertIn("PROVISIONAL", body)
+        self.assertNotIn('data-state="ERROR"', body)
+
+    def test_validation_error_renders_error_status(self):
+        body = self.client.post("/simulate", data=valid_form(sre="0")).get_data(as_text=True)
+        self.assertIn('data-state="ERROR"', body)
+        self.assertIn(">ERROR</span>", body)
+        self.assertNotIn('data-state="SUCCESS"', body)
+
+    def test_engine_failure_renders_error_status(self):
+        error = app_module.spice_engine.SimulationError("ngspice ไม่พร้อม: program not found")
+        with patch.object(app_module.spice_engine, "run_simulation", side_effect=error):
+            body = self.client.post("/simulate", data=valid_form()).get_data(as_text=True)
+        self.assertIn('data-state="ERROR"', body)
+        self.assertIn(">ERROR</span>", body)
+        self.assertNotIn('data-state="SUCCESS"', body)
+
+    def test_analytical_reference_is_labelled_and_independent(self):
+        with patch.object(app_module.spice_engine, "run_simulation", return_value=fake_result()):
+            body = self.client.post("/simulate", data=valid_form()).get_data(as_text=True)
+        self.assertIn("Analytical Reference", body)
+        self.assertIn("dc_bias.py", body)
+        self.assertIn("2.008", body)
+        self.assertIn("8.661", body)
+        self.assertIn("SPICE / ngspice", body)
+        self.assertIn("Bf", body)
+        self.assertIn("1.324", body)
 
 
 if __name__ == "__main__":

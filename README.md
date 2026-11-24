@@ -29,7 +29,8 @@ BJT DC Bias Web App/
 ├── dc_bias.py              # สมการวิศวกรรม Lab 03 ล้วน (SI units) ไม่รู้จัก HTTP
 ├── spice_engine.py         # Lab 04: netlist, subprocess ngspice, binary raw parser, SVG charts
 ├── templates/index.html    # ฟอร์มและตารางผลลัพธ์ (Jinja)
-├── static/style.css        # หน้าตาเว็บ
+├── static/style.css        # หน้าตาเว็บ (tokens, status, responsive)
+├── static/app.js           # JavaScript เปล่า ๆ สำหรับแสดง RUNNING ทันทีหลัง submit
 ├── reference/              # netlist ตัวอย่าง + โมเดล 2N3904 แบบ PROVISIONAL
 ├── tests/
 │   ├── test_dc_bias.py     # ทดสอบสมการ, validation, operating region
@@ -37,6 +38,7 @@ BJT DC Bias Web App/
 │   ├── test_spice_engine.py # ทดสอบ parser/analysis/netlist (mock subprocess)
 │   └── test_simulate_web.py # ทดสอบ POST /simulate (mock engine)
 ├── opencode.json           # MCP Server (Playwright) สำหรับให้ AI ตรวจเว็บ
+├── .opencode/              # คำสั่ง/skill Impeccable ที่ติดตั้งแบบ project-scope
 ├── requirements.txt
 └── docs/
     ├── validation.md       # เทียบค่ากับการคำนวณอ้างอิง (A1–A5)
@@ -51,7 +53,8 @@ BJT DC Bias Web App/
 - Flask 3.x (ติดตั้งจาก `requirements.txt`)
 - **Lab 04:** ngspice (ทดสอบกับ v47 จาก MSYS2 ucrt64) **ต้องอยู่ใน PATH** หรือตำแหน่งที่
   `spice_engine.resolve_ngspice()` รู้จัก; กำหนด `NGSPICE_BIN` เพื่อ override ได้
-- ไม่ต้องใช้ Node.js, JavaScript framework หรือฐานข้อมูลสำหรับตัวแอป
+- ตัวแอปไม่ต้องใช้ Node.js, JavaScript framework หรือฐานข้อมูล (ใช้ vanilla JS ไฟล์เดียวเพื่อแสดงสถานะ)
+- Node.js 18+ จำเป็นเฉพาะตอนรัน Playwright MCP สำหรับตรวจรับงาน
 
 ## การติดตั้ง
 
@@ -95,7 +98,7 @@ python -m flask --app app run
 python -m unittest discover -s tests -v
 ```
 
-ชุดทดสอบมี 45 tests (Lab 03 เดิม 25 + Lab 04 ใหม่ 20) ครอบคลุม
+ชุดทดสอบมี 51 tests (Lab 03 เดิม 25 + Lab 04 เดิม 20 + status/analytical ใหม่ 6) ครอบคลุม
 
 - สมการ DC bias เทียบค่าอ้างอิง
 - การตรวจสอบข้อมูลนำเข้า (R ≤ 0, β ≤ 0, VCC ≤ 0, VBE ติดลบ)
@@ -105,10 +108,11 @@ python -m unittest discover -s tests -v
 - การเลือกหน่วย (Ω / kΩ / MΩ, V / mV) และหน่วยที่ไม่รู้จัก
 - Lab 04: netlist, binary raw parser, `.op/.ac/.tran` analysis และ SVG chart (`spice_engine.py`)
 - Lab 04: `POST /simulate` ทั้งกรณีสำเร็จ, input ผิด และ ngspice ล้มเหลว
+- Lab 04: status `RUNNING/SUCCESS/ERROR`, provenance, analytical reference แยกจาก SPICE
 
-Lab 03 ไม่ได้เพิ่ม unittest ใหม่ตามใบงาน — การตรวจรับงานทำผ่าน Browser
-ด้วยตาราง A1–A5 ใน [`docs/validation.md`](docs/validation.md) ส่วน Lab 04 ตรวจ B1–B8
-ด้วย OpenCode Browser และบันทึกผลจริงในตารางเดียวกัน
+Lab 03 ไม่ได้เพิ่ม unittest ใหม่ตามใบงาน — รอบแรกตรวจด้วย OpenCode Browser ตามตาราง A1–A5
+ส่วน Lab 04 ตรวจ B1–B8 ด้วย **Playwright MCP จริง** และบันทึกผล/ภาพก่อน-หลังใน
+[`docs/validation.md`](docs/validation.md)
 
 ## หน่วยของค่า
 
@@ -185,20 +189,27 @@ Emitter Bias (แหล่งจ่ายเดียว)
   พอร์ต `5000` ยังเป็นของ Flask
 - ตรวจว่าเชื่อมต่อได้ด้วย `/mcps` ในแอป หรือ `opencode mcp list` ใน terminal
 
-ถ้าไม่มี Node.js ให้ใช้ browser tool ที่มีใน OpenCode หรือตรวจด้วยมือ
-แล้วบันทึกวิธีที่ใช้จริงใน `docs/validation.md` — ห้ามใช้ `curl` หรืออ่านโค้ดแทนการรัน Browser
+รอบ Lab 04 ใช้ **Playwright MCP จริง** ผ่าน `tools/call` (`browser_navigate`, `browser_fill_form`,
+`browser_select_option`, `browser_click`, `browser_evaluate`, `browser_take_screenshot`) บน Flask
+ที่รันอยู่จริง ไม่ใช่ mock/curl ใน session นี้ MCP tools ไม่ปรากฏใน tool catalog จึงขับ MCP server
+ตรงผ่าน stdio ด้วย helper ชั่วคราว และเก็บผลดิบไว้ใน `docs/evidence/playwright_*_results.json`
+ผล B1–B8, viewport 1280×900/390×844 และภาพ before/after อยู่ใน [`docs/validation.md`](docs/validation.md)
 
-รอบ Lab 04 ใช้ **OpenCode Browser** ตามที่เลือกใน session นี้ และบันทึกว่า Playwright MCP เป็น
-`NOT RUN` (ยังไม่ได้ตั้งค่า/ยืนยัน MCP server) ผล B1–B8 อยู่ใน [`docs/validation.md`](docs/validation.md)
+> ถ้าไม่มี Node.js ให้ใช้ browser tool ที่มีใน OpenCode หรือตรวจด้วยมือแล้วบันทึกวิธีที่ใช้จริง
+> ห้ามใช้ `curl` หรืออ่านโค้ดแทนการรัน Browser
 
 ## Lab 04: CE Amplifier Simulator
 
 แท็บ Lab 04 เรียก `/simulate` แยกจาก `/calculate` ของ Lab 03 และรัน ngspice จริงด้วยคำสั่ง
 `ngspice -b -o run.log -r run.raw circuit.cir` ใน temporary directory ผลกราฟอ่านจาก binary raw
 (`.op`, complex `.ac`, real `.tran`) ไม่ได้อ่าน `.print` จาก log และไม่มีค่าผลลัพธ์ฝังไว้ใน HTML
+หน้าเว็บแสดงสถานะ `RUNNING → SUCCESS/ERROR`, engine badge, provenance ของ solver และตาราง
+**Analytical Reference (`dc_bias.py`)** แยกต่างหากจาก **SPICE / ngspice** — β/VBE ในฟอร์ม Lab 04
+ใช้เฉพาะตารางอ้างอิง ส่วน solver ใช้ `Bf` จากไฟล์โมเดล
 
 โมเดลเริ่มต้นคือ `reference/provisional_2n3904.bjt` ซึ่งกำกับไว้ชัดเจนว่า **PROVISIONAL**
-หน้าเว็บจะแสดงป้าย `Local reference model (not instructor-verified)` เสมอจนกว่าจะได้รับ
+หน้าเว็บแสดงป้าย `PROVISIONAL` ใกล้หัวข้อและปุ่ม Run รวมถึง
+`Local reference model (not instructor-verified)` ในบรรทัดผลลัพธ์เสมอ จนกว่าจะได้รับ
 Starter Kit / โมเดลที่อาจารย์รับรอง แล้วจึงเปลี่ยน path และชื่อ `.model` ในฟอร์ม
 รายละเอียดและข้อควรระวังอยู่ใน [`reference/README.md`](reference/README.md)
 
@@ -215,5 +226,6 @@ Starter Kit / โมเดลที่อาจารย์รับรอง �
 
 ## เอกสารเพิ่มเติม
 
-- [`docs/validation.md`](docs/validation.md) — เทียบค่าที่โปรแกรมคำนวณกับการคำนวณอิสระ
+- [`docs/validation.md`](docs/validation.md) — ตาราง A1–A5, B1–B8 และผล Impeccable
+- [`docs/evidence/`](docs/evidence/) — ภาพ before/after, ผล Playwright ดิบ และหลักฐาน A4/A5
 - [`docs/reflection.md`](docs/reflection.md) — สิ่งที่ได้เรียนรู้จาก Lab นี้
