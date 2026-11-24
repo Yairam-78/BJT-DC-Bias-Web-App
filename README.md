@@ -208,9 +208,11 @@ Emitter Bias (แหล่งจ่ายเดียว)
 ใช้เฉพาะตารางอ้างอิง ส่วน solver ใช้ `Bf` จากไฟล์โมเดล
 
 โมเดลเริ่มต้นคือ `reference/provisional_2n3904.bjt` ซึ่งกำกับไว้ชัดเจนว่า **PROVISIONAL**
+อาจารย์ไม่ได้แจก Starter Kit หรือโมเดล BJT ที่รับรองให้ ณ วันที่ส่งงาน จึงใช้โมเดลภายในโปรเจกต์
+และไม่เลือกตัวเลือก `Lab verified model` / `Instructor Starter Kit file`
 หน้าเว็บแสดงป้าย `PROVISIONAL` ใกล้หัวข้อและปุ่ม Run รวมถึง
-`Local reference model (not instructor-verified)` ในบรรทัดผลลัพธ์เสมอ จนกว่าจะได้รับ
-Starter Kit / โมเดลที่อาจารย์รับรอง แล้วจึงเปลี่ยน path และชื่อ `.model` ในฟอร์ม
+`Local reference model (not instructor-verified)` ในบรรทัดผลลัพธ์เสมอ
+ถ้าได้รับไฟล์จากอาจารย์ภายหลังจึงเปลี่ยน path และชื่อ `.model` ในฟอร์มแล้วรัน B1–B8 ใหม่
 รายละเอียดและข้อควรระวังอยู่ใน [`reference/README.md`](reference/README.md)
 
 ## สมมติฐานและข้อจำกัด

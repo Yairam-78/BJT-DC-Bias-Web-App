@@ -204,9 +204,16 @@ test เดิมทั้ง 25 รายการยังผ่านทั�
 แต่ทุกค่าอ่านจากเบราว์เซอร์จริงที่โหลด Flask — ไม่ใช่ mock/hard-code
 
 **โมเดลที่ใช้จริง:** `reference/provisional_2n3904.bjt` (`.model Q2N3904`)
-สถานะ **PROVISIONAL — ยังไม่ใช่ Starter Kit / โมเดลที่อาจารย์รับรอง**
+สถานะ **PROVISIONAL — อาจารย์ไม่ได้แจกไฟล์ Starter Kit หรือโมเดล BJT ที่รับรองให้ ณ วันที่ส่งงาน**
+จึงไม่มีการเลือก `Lab verified model` หรือ `Instructor Starter Kit file` และไม่กล่าวอ้างว่าโมเดลนี้ได้รับจากอาจารย์
 หน้าเว็บแสดงป้าย `PROVISIONAL` ใกล้หัวข้อและปุ่ม Run รวมถึง
 `Local reference model (not instructor-verified)` ในบรรทัด provenance ทุกครั้ง
+
+> หมายเหตุการส่งงาน: ใบงานระบุให้ใช้โมเดลที่ Instructor Starter Kit กำหนด **ถ้าผู้สอนแจก**
+> ในกรณีนี้ไม่มีไฟล์จากผู้สอน จึงใช้โมเดลอ้างอิงภายในโปรเจกต์และรายงานตามตรง
+> ผล `.op/.ac/.tran` มาจาก ngspice จริงแต่ขึ้นกับ `Bf` และพารามิเตอร์ของโมเดลชั่วคราว
+> เปรียบเทียบกับ Analytical Reference ได้ในฐานะ "คนละแบบจำลอง" ไม่ใช่การเทียบความถูกต้องตรง ๆ
+> ถ้าได้รับโมเดลของอาจารย์ภายหลัง ให้แทนที่ไฟล์แล้วรัน B1–B8 ใหม่ก่อนอัปเดตคะแนน
 
 ## หลักการตรวจความถูกต้อง
 
@@ -241,7 +248,7 @@ test เดิมทั้ง 25 รายการยังผ่านทั�
 | Chrome console | `Total messages: 0 (Errors: 0, Warnings: 0)` หลังเพิ่ม `<link rel="icon" href="data:,">` |
 | Duplicate IDs / Jinja ค้าง | ไม่พบใน desktop และ mobile |
 | Impeccable detect | exit `0`, `[]` ที่ 1280×900 และ 390×844 (หลังแก้ contrast/hint/straggler) |
-|  Results provenance | ตาราง Analytical มีป้าย `dc_bias.py` + คำอธิบาย β/VBE คงที่; ตาราง SPICE อยู่ใต้ divider `SPICE / ngspice` และมี log/netlist ใน `<details>` |
+| Results provenance | ตาราง Analytical มีป้าย `dc_bias.py` + คำอธิบาย β/VBE คงที่; ตาราง SPICE อยู่ใต้ divider `SPICE / ngspice` และมี log/netlist ใน `<details>` |
 
 ### ภาพหน้าจอ before / after (Playwright MCP จริง)
 
@@ -266,7 +273,7 @@ test เดิมทั้ง 25 รายการยังผ่านทั�
 
 ## รอบ Impeccable critique → polish → audit
 
-- Critique แบบ dual-agent ได้ **24/40** และแจ้งผู้ใช้ก่อนแก้UI
+- Critique แบบ dual-agent ได้ **24/40** และแจ้งผู้ใช้ก่อนแก้ UI
   snapshot: `.impeccable/critique/2026-11-24T11-22-51Z__templates-index-html.md`
 - P1 ที่แก้แล้ว: `RUNNING → SUCCESS/ERROR` + ปุ่ม disabled, ตาราง Analytical แยกจาก SPICE,
   ป้าย PROVISIONAL ย้ายขึ้นใกล้หัวข้อและปุ่ม Run
@@ -287,5 +294,6 @@ test เดิมทั้ง 25 รายการยังผ่านทั�
   ความหมายทางฟิสิกส์เหมือนกัน และ `.tran` ยืนยัน `Inverted` แล้ว
 - fH อยู่นอกช่วง sweep 1 Hz–10 MHz จึงแสดง `not determined in sweep range` ตามตรง ไม่ได้สร้างตัวเลขขึ้นเอง
 - ผล DC SPICE ต่างจากผล Forward-Active Approximation ของ Lab 03 เพราะคนละแบบจำลอง (SPICE ใช้ Bf ของโมเดล)
-- ยังไม่มี Starter Kit / โมเดลที่อาจารย์รับรอง ผลทั้งหมดจึงเป็น **PROVISIONAL** และต้องเปลี่ยนโมเดลก่อนส่งคะแนนจริง
+- อาจารย์ไม่ได้แจก Starter Kit / โมเดลที่รับรองให้ ณ วันที่ส่งงาน ผลทั้งหมดจึงเป็น **PROVISIONAL**
+  และต้องเปลี่ยนโมเดล + รัน B1–B8 ใหม่เฉพาะเมื่อได้รับไฟล์จากอาจารย์ภายหลัง
 
