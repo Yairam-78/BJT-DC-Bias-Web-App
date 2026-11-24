@@ -642,3 +642,233 @@ sub {
     margin-left: 0;
   }
 }
+
+/* ---------- Lab 04 simulator ---------- */
+
+.view-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.view-tabs a {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.view-tabs a:hover,
+.view-tabs a:focus-visible {
+  border-color: var(--focus);
+  background: #f4fbfd;
+  outline: none;
+}
+
+.lab04 {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 2px solid #cfe0e9;
+  scroll-margin-top: 12px;
+}
+
+.lab04__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.kicker {
+  margin: 0 0 3px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.lab04__head h2 {
+  margin: 0;
+  color: var(--teal-deep);
+  font-size: 1.45rem;
+}
+
+.lab04__intro {
+  max-width: 780px;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.engine-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid #a7cfc2;
+  border-radius: 999px;
+  background: #e7f3ef;
+  color: #13645c;
+  font-size: 0.82rem;
+}
+
+.engine-badge__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #2e9e5b;
+  box-shadow: 0 0 0 3px rgba(46, 158, 91, 0.15);
+}
+
+.lab04__layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.sim-form h3,
+.sim-results h3 {
+  margin: 0 0 14px;
+  color: var(--teal);
+  font-size: 1rem;
+}
+
+.sim-results h4 {
+  margin: 20px 0 8px;
+  color: var(--teal-deep);
+  font-size: 0.9rem;
+}
+
+.sim-results h4 code {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.field__input--wide {
+  flex: 1 1 100%;
+}
+
+.field__input--wide input,
+.field__input--wide select {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.engine-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.badge--ok {
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-line);
+  color: var(--ok-ink);
+}
+
+.note {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.plot-wrap {
+  margin: 12px 0 0;
+  padding: 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: #fbfdfe;
+}
+
+.plot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.plot .axis {
+  stroke: #9fb4c2;
+  stroke-width: 1;
+}
+
+.plot .grid {
+  stroke: #e3ecf1;
+  stroke-width: 1;
+}
+
+.plot .tick,
+.plot .legend,
+.plot .axis-label {
+  fill: #5d7488;
+  font-size: 10px;
+}
+
+.plot .axis-label {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.plot-wrap figcaption {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
+.run-details {
+  margin-top: 18px;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 10px;
+}
+
+.run-details summary {
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.run-details h5 {
+  margin: 12px 0 4px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+}
+
+.run-details pre {
+  max-height: 220px;
+  overflow: auto;
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: #f2f6f9;
+  color: #28485c;
+  font-size: 0.7rem;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 1080px) {
+  .lab04__layout {
+    grid-template-columns: 1fr;
+  }
+}

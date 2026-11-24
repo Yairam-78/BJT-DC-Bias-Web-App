@@ -151,7 +151,7 @@ VCE = 9.932 − 1.899                    = 8.033 V
 | **A4** | Emitter · เหมือน A3 แต่ RE=2 kΩ | IC ลดจาก A3 · VCE 8.033 V | IB 9.401 µA · IC **0.940 mA** · IE 0.950 mA · VB 2.599 V · VE 1.899 V · VC 9.932 V · VCE **8.033 V** | OpenCode Browser | **PASS** |
 | **A5** | Fixed · RB=0 | มีข้อความให้แก้ RB เว็บไม่ล่ม ไม่โชว์ผลเดิม | ข้อความ `RB ต้องมากกว่า 0 (ได้รับ 0.0)` · ไม่มีตารางผล · HTTP 200 | OpenCode Browser | **PASS** |
 
-**Playwright MCP:** `NOT RUN` — เครื่องที่ตรวไม่มี Node.js (`node --version` ไม่พบ) จึงรัน MCP Server ไม่ได้
+**Playwright MCP:** `NOT RUN` — เครื่องที่ตรวจไม่มี Node.js (`node --version` ไม่พบ) จึงรัน MCP Server ไม่ได้
 
 ### หลักฐานจากหน้าเว็บ
 
@@ -186,4 +186,65 @@ test เดิมทั้ง 25 รายการยังผ่านทั�
   จึงกรอกค่าผ่าน DOM evaluation แล้วส่งฟอร์มจริง (`requestSubmit`)
   การส่งยังเป็น HTTP POST จริงผ่านเบราว์เซอร์ และอ่านผลจากหน้าเว็บที่ render แล้ว
 - ยังไม่ได้ตรวจด้วย Playwright MCP ตามเส้นทางหลักของใบงาน เพราะไม่มี Node.js บนเครื่องนี้
+
+---
+
+# Validation — Lab 04 (CE Amplifier Simulator)
+
+วันที่ตรวจ: 2026-11-24
+วิธีตรวจ: **OpenCode Browser** (เบราว์เซอร์จริงที่เชื่อมกับ session นี้) · `http://127.0.0.1:5000/`
+สภาพแวดล้อม: Python 3.14.2 · Flask 3.1.3 · ngspice 47 (MSYS2 `mingw-w64-ucrt-x86_64-ngspice`) ·
+`solver = C:\msys64\ucrt64\bin\ngspice.exe`
+
+**Playwright MCP:** `NOT RUN` — แม้ตอนนี้จะติดตั้ง Node.js แล้ว แต่ยังไม่ได้ตั้งค่า/ยืนยัน MCP server
+ตามเส้นทางของใบงาน ผู้ตรวจเลือกใช้ OpenCode Browser ตามที่ตกลงกัน จึงไม่กล่าวอ้างว่าเป็นผล Playwright MCP
+
+**โมเดลที่ใช้จริง:** `reference/provisional_2n3904.bjt` (`.model Q2N3904`)
+สถานะ **PROVISIONAL — ยังไม่ใช่ Starter Kit / โมเดลที่อาจารย์รับรอง**
+หน้าเว็บแสดงป้าย `Local reference model (not instructor-verified)` ทุกครั้ง
+
+## หลักการตรวจความถูกต้อง
+
+- ค่าทั้งหมดมาจากการรัน `ngspice -b -o run.log -r run.raw circuit.cir` จริง ผ่าน `spice_engine.py`
+- อ่านผลจาก **binary raw** (`.op`, complex `.ac`, real `.tran`) ไม่ได้อ่าน `.print` จาก log
+- ตรวจว่า HTTP `POST /simulate` คืน 200 และหน้าเว็บ render กราฟ `<polyline>` จากข้อมูลรันนั้น
+- เปรียบเทียบก่อน/หลังเมื่อเปลี่ยน RE และ Amplitude เพื่อยืนยันว่าไม่มีค่าหรือกราฟ hard-code
+- หน้าเว็บแสดง log/netlist ได้ใน `<details>` เพื่อให้ตรวจ provenance ได้
+
+## ตาราง B1–B8 (ผลที่เห็นจริงจากหน้าเว็บ)
+
+| Case | Method | Input | Expected / Reference | Observed | Evidence | Status |
+|---|---|---|---|---|---|---|
+| **B1** | OpenCode Browser · กดการ์ด Fixed → Emitter → Divider แล้วกด Calculate | ค่า Lab 03 เดิม: VCC 12 V, RC 2.2 kΩ, β 100, VBE 0.7 V, RB 1 MΩ / R1 100 k, R2 22 k, RE 1 k | ผลเดิมตรง A1–A3 ใน validation เดิม | Fixed: IC 1.130 mA, VCE 9.514 V · Emitter: IC 1.026 mA, VCE 8.705 V · Divider: IC 1.230 mA, VCE 8.052 V | ข้อความที่อ่านจากหน้าเว็บ + `docs/validation.md` ชุด A1–A3 | **PASS** |
+| **B2** | เลือก Analysis `.op only` → Run ngspice | 12 V / 100 k / 22 k / 2.2 k / 1 k, model local reference | มี `RUN OK`, model, status และ VB/VE/VC/VCE/IC จาก ngspice | `RUN OK · Local reference model (not instructor-verified) · Q2N3904`; VB 2.004 V · VE 1.333 V · VC 9.087 V · VCE 7.754 V · IB 8.887 µA · IC 1.324 mA · IE 1.333 mA · Forward-active | หน้า Simulation Results + log/netlist ใน `<details>` | **PASS** |
+| **B3** | เปลี่ยนเฉพาะ RE แล้ว Run `.op` ซ้ำ | RE 1 kΩ → 2 kΩ (ค่าอื่นคงเดิม) | Operating point ต้องเปลี่ยน ไม่ใช่ค่าค้าง | ก่อน: VE 1.333 V, VC 9.087 V, IC 1.324 mA · หลัง: VE 1.419 V, VC 10.450 V, IC 0.704 mA, IB 5.060 µA | ผลก่อน/หลังจากหน้าเว็บ | **PASS** |
+| **B4** | เลือก Analysis `.op + .ac + .tran` → Run → อ่านกราฟ Bode | AC 1 Hz–10 MHz, 10 mV @ 1 kHz | แกน Frequency พร้อมหน่วย, Gain dB, Phase deg จากรันจริง | Midband gain **4.89 dB**, phase **179.99°** (เทียบเท่า ≈ −180°, CE กลับเฟส), fL **1.785 Hz**, fH `not determined in sweep range`; กราฟ 2 รูปมีแกน `Frequency (Hz, log10)` / `Gain (dB)` / `Phase (deg)` | DOM: `svg.plot` มี `<polyline>` จริง 3 รูป + `POST /simulate` status 200 | **PASS** |
+| **B5** | อ่านกราฟ transient จากรันเดียวกัน | 10 mV peak @ 1 kHz, no bypass capacitor | เห็น Vin/Vout ตามเวลา มีป้ายเวลา/แรงดัน และสัญญาณกลับเฟส | Vin pp **20.00 mV**, Vout pp **35.12 mV**, \|Vout/Vin\| **1.756**, `Phase: Inverted (≈180°)`; แกน `Time (ms)` / `Voltage (V)`, legend `Vin`, `Vout`, polyline 2 เส้น | `docs/evidence/desktop_lab04.png` + ข้อความจากหน้าเว็บ | **PASS** |
+| **B6** | เปลี่ยน Amplitude 10 → 20 mV แล้ว Run ซ้ำ | Amplitude 20 mV, ความถี่ 1 kHz, ค่าอื่นคงเดิม | Waveform ต้องเปลี่ยนตามค่า ไม่ใช่กราฟ hard-code | Vin pp 20.00 → **40.00 mV**, Vout pp 35.12 → **70.23 mV**, gain ยัง ≈ **1.756** → waveform ขยาย 2× ตามค่าที่ป้อน | ผลก่อน/หลังจากหน้าเว็บ | **PASS** |
+| **B7** | ใส่ RE = 0 แล้ว Run | `sre=0` | แจ้ง error เป็นภาษาไทย ไม่ค้าง ไม่โชว์ผลสำเร็จปลอม | ข้อความ `RE ต้องมากกว่า 0` + `กรุณาแก้ไขค่าที่ไม่ถูกต้อง (1 รายการ)`; ไม่มี `RUN OK`, ไม่มี `<polyline>` | `docs/evidence/error_re_zero.png` | **PASS** |
+| **B8** | UI | เปิดหน้าเว็บจริงแบบ desktop และแบบ viewport กว้าง 390 px (iframe ในเบราว์เซอร์จริง) แล้วสลับโหมด | ปุ่ม/หน่วย/กราฟอ่านได้ ไม่ตัดเนื้อหาสำคัญ | Desktop: layout 2 คอลัมน์, กราฟ 3 รูปแสดงครบ · 390 px: `matchMedia('(max-width: 1080px)')` และ `(max-width: 560px)` = true, `.lab04__layout` เป็น 1 คอลัมน์ (347 px), สลับไป Fixed Bias สำเร็จ, Run ngspice สำเร็จและมีกราฟ 3 รูป | `docs/evidence/desktop_lab04.png`, `docs/evidence/mobile_lab04.png`, `docs/evidence/mobile_frame.html` | **PASS** |
+
+> หมายเหตุ B8: OpenCode Browser ไม่มีเครื่องมือปรับ viewport โดยตรง จึงใช้หน้า `mobile_frame.html`
+> ที่ฝังแอปใน `<iframe width=390>` — iframe มี viewport จริง 390 CSS px และ media query ทำงานจริง
+> จึงไม่ใช่แค่การย่อภาพ screenshot
+
+## ผล unittest รอบ Lab 04
+
+```bash
+python -m unittest discover -s tests -v
+# Ran 45 tests ... OK
+```
+
+แยกเป็น: 25 test เดิมของ Lab 03 ยังผ่าน + 20 test ใหม่สำหรับ `spice_engine.py` และ `/simulate`
+(ในจำนวนนี้มี 2 test ที่ครอบ `resolve_ngspice()` fallback)
+
+## ความคลาดเคลื่อน / ข้อจำกัดที่ยังรู้
+
+- หน้าเว็บแสดง `ngspice (version unknown)` เพราะ log แบบ `-b -o` ไม่พบบรรทัด banner เวอร์ชัน
+  แต่ binary ที่รันจริงคือ ngspice 47 จาก MSYS2 ucrt64 (ตรวจจาก package และ header ของ executable)
+- Phase ของ AC ที่ความถี่ midband ออกมา **+179.99°** ไม่ใช่ −180° เนื่องจากทิศทางอ้างอิงเฟสของ AC source
+  ความหมายทางฟิสิกส์เหมือนกัน และ `.tran` ยืนยัน `Inverted` แล้ว
+- fH อยู่นอกช่วง sweep 1 Hz–10 MHz จึงแสดง `not determined in sweep range` ตามตรง ไม่ได้สร้างตัวเลขขึ้นเอง
+- ผล DC SPICE ต่างจากผล Forward-Active Approximation ของ Lab 03 เพราะคนละแบบจำลอง (SPICE ใช้ Bf ของโมเดล)
+- ยังไม่มี Starter Kit / โมเดลที่อาจารย์รับรอง ผลทั้งหมดจึงเป็น **PROVISIONAL** และต้องเปลี่ยนโมเดลก่อนส่งคะแนนจริง
 

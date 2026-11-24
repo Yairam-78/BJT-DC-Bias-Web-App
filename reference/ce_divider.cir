@@ -1,0 +1,45 @@
+* ============================================================
+* Lab 04 reference circuit: CE amplifier, voltage-divider bias
+* STATUS: PROVISIONAL fixture - BJT model is NOT instructor-verified.
+* Replace the .include file when the Starter Kit arrives.
+*
+* Nodes:
+*   vcc  = supply rail
+*   in   = generator output (Vin reference node)
+*   b    = base
+*   c    = collector
+*   e    = emitter
+*   out  = load output (Vout reference node)
+* ============================================================
+
+.include provisional_2n3904.bjt
+
+VCC  vcc 0  DC 12
+VIN  in  0  DC 0  SIN(0 10m 1k)  AC 10m 0
+
+R1   vcc b  100k
+R2   b   0  22k
+RC   vcc c  2.2k
+RE   e   0  1k
+
+CIN  in  b  10u
+COUT c   out 10u
+RL   out 0  10k
+
+Q1   c b e Q2N3904
+
+* ---- DC operating point -------------------------------------
+.op
+.print dc v(b) v(e) v(c) v(c)-v(e) i(rc) i(vcc) i(q1)
+
+* ---- AC small-signal frequency response ---------------------
+* Vin is measured at node "in" ( generator side of Cin ).
+.ac dec 100 1 10Meg
+.print ac vdb(in) vp(in) vdb(out) vp(out) vdb(out)-vdb(in) vp(out)-vp(in)
+
+* ---- Transient response -------------------------------------
+* 1 kHz input, 5 ms window = 5 cycles, 1 us step.
+.tran 1u 5m
+.print tran v(in) v(out) v(b) v(c)
+
+.end

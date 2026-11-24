@@ -6,6 +6,8 @@ BJT NPN Common-Emitter **สามแบบไบอัส** — Voltage Divider
 
 งานนี้เป็นชิ้นงาน Lab 03 ของรายวิชา ENG29 2121 ต่อยอดจาก Lab 02 — โปรแกรมเป็น Web Application
 หลายไฟล์ที่มี Python Backend คำนวณจริง ไม่ใช่ HTML ที่ฝังตัวเลขไว้
+Lab 04 ต่อยอดแอปเดิมโดยเพิ่ม **CE Amplifier Simulator** ที่รัน ngspice จริง (.op / .ac / .tran)
+โดยไม่แก้ผลคำนวณ Lab 03 เดิม
 
 ## ภาพรวม
 
@@ -15,18 +17,25 @@ BJT NPN Common-Emitter **สามแบบไบอัส** — Voltage Divider
 - Python (`dc_bias.py`) คำนวณ VB, VE, VC, VCE, IC, IB, IE (+ VTH, RTH สำหรับ Divider)
 - แสดงหน่วยกำกับทุกค่า และแจ้งสถานะการทำงาน: Forward-Active / Cutoff / Saturation
 - ตรวจสอบข้อมูลนำเข้าและแสดงข้อความผิดพลาดที่อ่านได้ (ไม่ทำให้หน้าเว็บล้ม)
+- **Lab 04:** แท็บแยกสำหรับกรอก VCC/R1/R2/RC/RE/RL/Cin/Cout/Amplitude/Frequency
+  เลือก Source/Analysis/Model แล้วกด **Run ngspice** → แสดง operating point, Bode plot,
+  transient waveform, log และ netlist ที่ใช้รันจริง
 
 ## โครงสร้างโปรเจกต์
 
 ```
 BJT DC Bias Web App/
 ├── app.py                  # Flask routes, form parsing, unit → SI conversion, mode dispatch
-├── dc_bias.py              # สมการวิศวกรรมล้วน (SI units) ไม่รู้จัก HTTP
+├── dc_bias.py              # สมการวิศวกรรม Lab 03 ล้วน (SI units) ไม่รู้จัก HTTP
+├── spice_engine.py         # Lab 04: netlist, subprocess ngspice, binary raw parser, SVG charts
 ├── templates/index.html    # ฟอร์มและตารางผลลัพธ์ (Jinja)
 ├── static/style.css        # หน้าตาเว็บ
+├── reference/              # netlist ตัวอย่าง + โมเดล 2N3904 แบบ PROVISIONAL
 ├── tests/
 │   ├── test_dc_bias.py     # ทดสอบสมการ, validation, operating region
-│   └── test_web.py         # ทดสอบ HTTP ด้วย Flask test client
+│   ├── test_web.py         # ทดสอบ HTTP ด้วย Flask test client
+│   ├── test_spice_engine.py # ทดสอบ parser/analysis/netlist (mock subprocess)
+│   └── test_simulate_web.py # ทดสอบ POST /simulate (mock engine)
 ├── opencode.json           # MCP Server (Playwright) สำหรับให้ AI ตรวจเว็บ
 ├── requirements.txt
 └── docs/
@@ -40,7 +49,9 @@ BJT DC Bias Web App/
 
 - Python 3.10 ขึ้นไป (พัฒนาและทดสอบบน Python 3.14.2)
 - Flask 3.x (ติดตั้งจาก `requirements.txt`)
-- ไม่ต้องใช้ Node.js, JavaScript framework หรือฐานข้อมูล
+- **Lab 04:** ngspice (ทดสอบกับ v47 จาก MSYS2 ucrt64) **ต้องอยู่ใน PATH** หรือตำแหน่งที่
+  `spice_engine.resolve_ngspice()` รู้จัก; กำหนด `NGSPICE_BIN` เพื่อ override ได้
+- ไม่ต้องใช้ Node.js, JavaScript framework หรือฐานข้อมูลสำหรับตัวแอป
 
 ## การติดตั้ง
 
@@ -84,7 +95,7 @@ python -m flask --app app run
 python -m unittest discover -s tests -v
 ```
 
-ชุดทดสอบมี 25 tests ครอบคลุม
+ชุดทดสอบมี 45 tests (Lab 03 เดิม 25 + Lab 04 ใหม่ 20) ครอบคลุม
 
 - สมการ DC bias เทียบค่าอ้างอิง
 - การตรวจสอบข้อมูลนำเข้า (R ≤ 0, β ≤ 0, VCC ≤ 0, VBE ติดลบ)
@@ -92,9 +103,12 @@ python -m unittest discover -s tests -v
 - HTTP: `GET /` และ `POST /calculate` ผ่าน Flask test client
 - ข้อมูลผิดรูปแบบ เช่น ช่องว่าง, `abc`, `100,000`
 - การเลือกหน่วย (Ω / kΩ / MΩ, V / mV) และหน่วยที่ไม่รู้จัก
+- Lab 04: netlist, binary raw parser, `.op/.ac/.tran` analysis และ SVG chart (`spice_engine.py`)
+- Lab 04: `POST /simulate` ทั้งกรณีสำเร็จ, input ผิด และ ngspice ล้มเหลว
 
 Lab 03 ไม่ได้เพิ่ม unittest ใหม่ตามใบงาน — การตรวจรับงานทำผ่าน Browser
-ด้วยตาราง A1–A5 ใน [`docs/validation.md`](docs/validation.md)
+ด้วยตาราง A1–A5 ใน [`docs/validation.md`](docs/validation.md) ส่วน Lab 04 ตรวจ B1–B8
+ด้วย OpenCode Browser และบันทึกผลจริงในตารางเดียวกัน
 
 ## หน่วยของค่า
 
@@ -174,10 +188,25 @@ Emitter Bias (แหล่งจ่ายเดียว)
 ถ้าไม่มี Node.js ให้ใช้ browser tool ที่มีใน OpenCode หรือตรวจด้วยมือ
 แล้วบันทึกวิธีที่ใช้จริงใน `docs/validation.md` — ห้ามใช้ `curl` หรืออ่านโค้ดแทนการรัน Browser
 
+รอบ Lab 04 ใช้ **OpenCode Browser** ตามที่เลือกใน session นี้ และบันทึกว่า Playwright MCP เป็น
+`NOT RUN` (ยังไม่ได้ตั้งค่า/ยืนยัน MCP server) ผล B1–B8 อยู่ใน [`docs/validation.md`](docs/validation.md)
+
+## Lab 04: CE Amplifier Simulator
+
+แท็บ Lab 04 เรียก `/simulate` แยกจาก `/calculate` ของ Lab 03 และรัน ngspice จริงด้วยคำสั่ง
+`ngspice -b -o run.log -r run.raw circuit.cir` ใน temporary directory ผลกราฟอ่านจาก binary raw
+(`.op`, complex `.ac`, real `.tran`) ไม่ได้อ่าน `.print` จาก log และไม่มีค่าผลลัพธ์ฝังไว้ใน HTML
+
+โมเดลเริ่มต้นคือ `reference/provisional_2n3904.bjt` ซึ่งกำกับไว้ชัดเจนว่า **PROVISIONAL**
+หน้าเว็บจะแสดงป้าย `Local reference model (not instructor-verified)` เสมอจนกว่าจะได้รับ
+Starter Kit / โมเดลที่อาจารย์รับรอง แล้วจึงเปลี่ยน path และชื่อ `.model` ในฟอร์ม
+รายละเอียดและข้อควรระวังอยู่ใน [`reference/README.md`](reference/README.md)
+
 ## สมมติฐานและข้อจำกัด
 
-- ใช้ **Forward-Active Approximation**: β คงที่ และ VBE คงที่ ไม่คำนึงถึงอุณหภูมิ
-- **ไม่ใช่ SPICE/ngspice** ไม่มีการแก้สมการแบบ nonlinear หรือ model ของผู้ผลิต
+- โหมด Lab 03 ใช้ **Forward-Active Approximation**: β คงที่ และ VBE คงที่ ไม่คำนึงถึงอุณหภูมิ
+- โหมด Lab 03 **ไม่ใช่ SPICE/ngspice** ไม่มีการแก้สมการแบบ nonlinear หรือ model ของผู้ผลิต
+  (Lab 04 เป็นคนละแท็บและรัน ngspice จริงตามที่อธิบายข้างต้น)
 - ถ้า `VTH ≤ VBE` (Divider) หรือ `VCC ≤ VBE` (Fixed/Emitter) ถือเป็น **Cutoff**
   (กระแสเป็นศูนย์) และแจ้งว่าแบบจำลองใช้ไม่ได้
 - ถ้า `VCE ≤ 0.3 V` ถือว่า **Saturation** — ค่า IC จากสมการ forward-active

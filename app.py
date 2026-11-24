@@ -4,8 +4,11 @@ The HTTP layer only parses the form, converts the chosen units to SI and
 renders the template. All engineering lives in :mod:`dc_bias`.
 """
 
+import math
+
 from flask import Flask, render_template, request
 
+import spice_engine
 from dc_bias import (
     calculate_dc_bias,
     calculate_emitter_bias,
@@ -94,6 +97,86 @@ DEFAULT_UNITS = {
     "vbe": "v",
 }
 
+# Lab 04 uses separate field names so the original Lab 03 form parser and its
+# tests remain untouched. Values are converted to SI here before reaching the
+# solver adapter.
+SIM_FIELDS = (
+    "svcc", "sr1", "sr2", "src", "sre", "srl",
+    "scin", "scout", "sampl", "sfreq", "sbeta",
+)
+
+SIM_FIELD_LABELS = {
+    "svcc": "VCC",
+    "sr1": "R1",
+    "sr2": "R2",
+    "src": "RC",
+    "sre": "RE",
+    "srl": "RL",
+    "scin": "Cin",
+    "scout": "Cout",
+    "sampl": "Amplitude",
+    "sfreq": "Frequency",
+    "sbeta": "β",
+}
+
+SIM_UNIT_FACTORS = {
+    "svcc": {"v": 1.0, "mv": 1e-3},
+    "sr1": {"ohm": 1.0, "kohm": 1e3, "mohm": 1e6},
+    "sr2": {"ohm": 1.0, "kohm": 1e3, "mohm": 1e6},
+    "src": {"ohm": 1.0, "kohm": 1e3, "mohm": 1e6},
+    "sre": {"ohm": 1.0, "kohm": 1e3, "mohm": 1e6},
+    "srl": {"ohm": 1.0, "kohm": 1e3, "mohm": 1e6},
+    "scin": {"f": 1.0, "u": 1e-6, "n": 1e-9, "p": 1e-12},
+    "scout": {"f": 1.0, "u": 1e-6, "n": 1e-9, "p": 1e-12},
+    "sampl": {"v": 1.0, "mv": 1e-3},
+    "sfreq": {"hz": 1.0, "khz": 1e3, "mhz": 1e6},
+    "sbeta": {},
+}
+
+SIM_DEFAULT_FORM = {
+    "svcc": "12",
+    "sr1": "100",
+    "sr2": "22",
+    "src": "2.2",
+    "sre": "1",
+    "srl": "10",
+    "scin": "10",
+    "scout": "10",
+    "sampl": "10",
+    "sfreq": "1",
+    "sbeta": "150",
+    "ssource": "ac_sine",
+    "sanalysis": "all",
+    "smodel": "local_reference",
+    "smodel_path": "",
+    "smodel_name": "",
+}
+
+SIM_DEFAULT_UNITS = {
+    "svcc": "v",
+    "sr1": "kohm",
+    "sr2": "kohm",
+    "src": "kohm",
+    "sre": "kohm",
+    "srl": "kohm",
+    "scin": "u",
+    "scout": "u",
+    "sampl": "mv",
+    "sfreq": "khz",
+    "sbeta": "",
+}
+
+SIM_SELECT_FIELDS = ("ssource", "sanalysis", "smodel")
+SIM_OPTIONS = {
+    "ssource": (("ac_sine", "AC sine (10 mV @ 1 kHz)"), ("dc_pulse", "DC pulse")),
+    "sanalysis": (("all", ".op + .ac + .tran"), ("op", ".op only"), ("ac", ".ac only"), ("tran", ".tran only")),
+    "smodel": (
+        ("local_reference", "Local reference (not instructor-verified)"),
+        ("lab_reference", "Lab verified model (when supplied)"),
+        ("starter_kit", "Instructor Starter Kit file"),
+    ),
+}
+
 
 def _allowed_units(name: str):
     if name in RESISTOR_FIELDS:
@@ -160,7 +243,94 @@ def _read_values(raw: dict, units: dict, mode: str) -> tuple[dict, dict]:
     return values, errors
 
 
-def _render(*, mode: str, form: dict, units: dict, result, errors: dict):
+def _read_sim_form(form_data) -> tuple[dict, dict]:
+    """Read both Lab 04 numeric fields and selection fields without losing them."""
+    raw = {name: (form_data.get(name) or "").strip() for name in SIM_FIELDS + SIM_SELECT_FIELDS}
+    raw["smodel_path"] = (form_data.get("smodel_path") or "").strip()
+    raw["smodel_name"] = (form_data.get("smodel_name") or "").strip()
+    units = {
+        name: (form_data.get(f"{name}_unit") or SIM_DEFAULT_UNITS[name])
+        for name in SIM_FIELDS
+    }
+    return raw, units
+
+
+def _read_sim_values(raw: dict, units: dict) -> tuple[dict, dict]:
+    """Convert the Lab 04 form to SI and collect per-field Thai errors."""
+    values: dict[str, float] = {}
+    errors: dict[str, str] = {}
+
+    for name in SIM_FIELDS:
+        label = SIM_FIELD_LABELS[name]
+        allowed = SIM_UNIT_FACTORS[name]
+        # β has no unit selector; an empty factor map means dimensionless.
+        if allowed:
+            if units[name] not in allowed:
+                errors[name] = f"{label} หน่วยไม่ถูกต้อง"
+                continue
+            factor = allowed[units[name]]
+        else:
+            factor = 1.0
+        text = raw[name]
+        if text == "":
+            errors[name] = f"{label} ต้องกรอก"
+            continue
+        try:
+            number = float(text)
+        except ValueError:
+            errors[name] = f"{label} ต้องเป็นตัวเลข"
+            continue
+        if not math.isfinite(number):
+            errors[name] = f"{label} ต้องเป็นตัวเลขที่จำกัด"
+            continue
+        if name == "sampl":
+            if number < 0:
+                errors[name] = f"{label} ต้องไม่ติดลบ"
+        elif number <= 0:
+            errors[name] = f"{label} ต้องมากกว่า 0"
+        if name not in errors:
+            values[name] = number * factor
+
+    for name, options in SIM_OPTIONS.items():
+        if raw[name] not in dict(options):
+            errors[name] = f"{SIM_FIELD_LABELS.get(name, name)} ไม่ถูกต้อง"
+
+    return values, errors
+
+
+def _make_sim_input(values: dict, raw: dict) -> spice_engine.SimulationInput:
+    return spice_engine.SimulationInput(
+        vcc=values["svcc"],
+        r1=values["sr1"],
+        r2=values["sr2"],
+        rc=values["src"],
+        re=values["sre"],
+        rl=values["srl"],
+        cin=values["scin"],
+        cout=values["scout"],
+        amplitude=values["sampl"],
+        frequency=values["sfreq"],
+        beta=values["sbeta"],
+        source=raw["ssource"],
+        analysis=raw["sanalysis"],
+        model_source=raw["smodel"],
+        model_path=raw["smodel_path"],
+        model_name=raw["smodel_name"],
+    )
+
+
+def _render(
+    *,
+    mode: str,
+    form: dict,
+    units: dict,
+    result,
+    errors: dict,
+    sim_form: dict | None = None,
+    sim_units: dict | None = None,
+    sim_result=None,
+    sim_errors: dict | None = None,
+):
     config = MODES[mode]
     return render_template(
         "index.html",
@@ -173,6 +343,14 @@ def _render(*, mode: str, form: dict, units: dict, result, errors: dict):
         result=result,
         errors=errors,
         status=result.region if result else None,
+        sim_form=dict(SIM_DEFAULT_FORM) if sim_form is None else sim_form,
+        sim_units=dict(SIM_DEFAULT_UNITS) if sim_units is None else sim_units,
+        sim_result=sim_result,
+        sim_errors=sim_errors or {},
+        sim_fields=SIM_FIELDS,
+        sim_labels=SIM_FIELD_LABELS,
+        sim_units_map=SIM_UNIT_FACTORS,
+        sim_options=SIM_OPTIONS,
     )
 
 
@@ -207,3 +385,31 @@ def calculate():
             errors["_form"] = str(exc)
 
     return _render(mode=mode, form=raw, units=units, result=result, errors=errors)
+
+
+@app.post("/simulate")
+def simulate():
+    """Run the CE amplifier solver without touching the Lab 03 calculation path."""
+    raw, units = _read_sim_form(request.form)
+    values, errors = _read_sim_values(raw, units)
+    result = None
+
+    if not errors:
+        try:
+            result = spice_engine.run_simulation(_make_sim_input(values, raw))
+        except ValueError as exc:
+            errors["_sim"] = str(exc)
+        except spice_engine.SimulationError as exc:
+            errors["_sim"] = f"การจำลองล้มเหลว: {exc}"
+
+    return _render(
+        mode=DEFAULT_MODE,
+        form=dict(DEFAULT_FORM),
+        units=dict(DEFAULT_UNITS),
+        result=None,
+        errors={},
+        sim_form=raw,
+        sim_units=units,
+        sim_result=result,
+        sim_errors=errors,
+    )
